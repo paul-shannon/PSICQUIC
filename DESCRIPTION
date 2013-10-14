@@ -1,7 +1,7 @@
 Package: PSICQUIC
 Type: Package
 Title: Protemics Standard Initiative Common QUery InterfaCe
-Version: 0.99.16
+Version: 1.0.0
 Date: 2013-10-11
 Author: Paul Shannon
 Maintainer: Paul Shannon<pshannon@fhcrc.org>
