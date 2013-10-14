@@ -1,0 +1,24 @@
+exportClasses(PSICQUIC, IDMapper)
+
+exportMethods(
+  interactions,
+  providers,
+  rawQuery,
+  addGeneInfo,
+  show
+  )
+
+export(
+  PSICQUIC,
+  IDMapper,
+  interactionTypes,
+  detectionMethods,
+  speciesIDs
+  )
+
+import(BiocGenerics)
+import(RCurl)
+import(biomaRt)
+import(IRanges)
+import(methods)
+

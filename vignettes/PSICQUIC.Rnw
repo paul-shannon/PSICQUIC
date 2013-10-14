@@ -1,0 +1,263 @@
+\documentclass{article}
+%\VignetteIndexEntry{PSICQUIC}
+\usepackage[noae]{Sweave}
+\usepackage[left=0.5in,top=0.5in,right=0.5in,bottom=0.75in,nohead,nofoot]{geometry} 
+\usepackage{hyperref}
+\usepackage[noae]{Sweave}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\newenvironment{packed_enum}{
+\begin{enumerate}
+  \setlength{\itemsep}{2pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{enumerate}}
+
+
+\newenvironment{packed_list}{
+\begin{itemize}
+  \setlength{\itemsep}{2pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{itemize}}
+     
+
+\definecolor{Blue}{rgb}{0,0,0.5}
+\definecolor{Green}{rgb}{0,0.5,0}
+
+
+\RecustomVerbatimEnvironment{Sinput}{Verbatim}{%
+  xleftmargin=1em,%
+  fontsize=\small,%
+  fontshape=sl,%
+  formatcom=\color{Blue}%
+  }
+\RecustomVerbatimEnvironment{Soutput}{Verbatim}{%
+  xleftmargin=0em,%
+  fontsize=\scriptsize,%
+  formatcom=\color{Blue}%
+  }
+\RecustomVerbatimEnvironment{Scode}{Verbatim}{xleftmargin=2em}
+
+
+
+\renewenvironment{Schunk}{\vspace{\topsep}}{\vspace{\topsep}}
+\fvset{listparameters={\setlength{\topsep}{6pt}}}
+% These determine the rules used to place floating objects like figures 
+% They are only guides, but read the manual to see the effect of each.
+\renewcommand{\topfraction}{.99}
+\renewcommand{\bottomfraction}{.99}
+\renewcommand{\textfraction}{0.0}
+
+
+
+\title{PSICQUIC} 
+\author{Paul Shannon}
+
+\begin{document} 
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+PSICQUIC (the Proteomics Standard Initiative Common QUery InterfaCe,
+pronounced ``psy-kick'') is ``an effort from the HUPO Proteomics
+Standard Initiative (HUPO-PSI) to standardise the access to molecular
+interaction databases programmatically''.  The Bioconductor PSICQUIC
+package provides a traditional R function-calling (S4) interface
+layered on top of the PSICQUIC REST interface, to obtain a data.frame
+of annotated interactions between specified proteins, each of which is
+typically described by the HUGO symbol of the gene which codes for the
+protein of interest.
+
+PSICQUIC is loose association of web accessible databases,
+``providers'', linked explicitly only by virtue of being listed at the
+central PSICQUIC web site.  Each provider supports the \textbf{MIQL}
+(molecular interaction query language), and each of which returns
+standard columns in tab-delimited text.  In typical use one queries for
+all of the interactions in which a protein participates.  Equally
+typical are queries for all known interactions between two
+specified proteins.  These queries are easily constrained by
+\textbf{provider} (e.g., BioGrid or IntAct), by
+\textbf{detectionMethod}, by interaction \textbf{type}, and/or by
+\textbf{publicationID}.
+
+Interactions among a set of three or more genes may also be requested.  The 
+combinations of possible pairs grows non-linearly with the number of genes, so use this
+option with care.
+
+PSICQUIC may therefore be best suited to the close
+study of a few dozen genes or proteins of interest, rather than for
+obtaining interactions for hundreds or thousands of genes or proteins.
+For bulk interactions, we recommend that you directly download
+databases from individual PSICQUIC (or other) providers.
+
+Approximately thirty databases currently implement PSICQUIC.  They all
+
+\begin{packed_list}
+  \item Support the molecular interaction query language (MIQL)
+  \item Use a controlled vocabulary describing interactions and detection methods
+  \item Communicate via SOAP or REST
+  \item Return results in XML or a tab-delimited form
+  \item May be interogated programmatically or via a URL in a web browser
+\end{packed_list}
+
+<<listProviders>>=
+library(PSICQUIC)
+psicquic <- PSICQUIC()
+providers(psicquic)
+@ 
+
+\section{Quick Start: find interactions between Myc and Tp53}
+
+
+A simple example is the best introduction to this package.  Here
+we discover that BioGrid, Intact, Reactome, STRING and BIND each
+report one or more interactions between human Myc and Tp53:
+
+<<queryMycTp53>>=
+library(PSICQUIC)
+psicquic <- PSICQUIC()
+providers(psicquic)
+tbl <- interactions(psicquic, id=c("TP53", "MYC"), species="9606")
+dim(tbl)
+@ 
+Note that the several arguments to the \emph{interactions} method are 
+unspecified.  They maintain their default values, and act as wildcards in the query.
+
+How many of the approximately twenty-five data sources reported interactions?
+
+<<sourceCount>>=
+table(tbl$provider)
+@ 
+
+What kind of interactions, detection methods and references were
+reported?  (Note that the terms used in the controlled vocabularies used
+by the PSICQUIC data sources are often quite long, complicating the
+display of extractions from our data.frame.  To get around this here,
+we extract selected columns in small groups so that the results will
+fit on the page.)
+
+<<summaryCounts>>=
+tbl[, c("provider", "type", "detectionMethod")]
+@ 
+
+These are quite heterogeneous.  The well-established ``tandem affinity
+purification'' proteomics method probably warrants more weight than
+``predictive text mining''.  Let's focus on them:
+
+<<taptag>>=
+tbl[grep("affinity", tbl$detectionMethod), 
+    c("type", "publicationID", "firstAuthor", "confidenceScore", "provider")]
+@ 
+
+This result demonstrates that different providers report results from
+the same paper in different ways, sometimes omitting confidence scores, and
+sometimes using different (though related) terms from the PSI controlled
+vocabularies.
+
+\section{Retrieve all Myc interactions found by Agrawal et al, 2010, using tandem affinity purification}
+
+These reports of TP53/Myc interactions by
+detection methods variously described as ``affinity chromotography
+technology'' and ``tandem affinity purification'', both accompanied by
+a reference to the same recent paper (\textbf{``Proteomic profiling
+of Myc-associated proteins''}, Agrawal et al, 2010), suggests the next task: 
+obtain all of the interactions reported in that paper.
+
+<<broadTaptag>>=
+tbl.myc <- interactions(psicquic, "MYC", species="9606", publicationID="21150319")
+@ 
+
+How many were returned?  From what sources? Any confidence scores reported?
+<<mycInteractorsExamined>>=
+dim(tbl.myc)
+table(tbl.myc$provider)
+table(tbl.myc$confidenceScore)
+@ 
+
+\section{Gene symbols for input, ``native'' identifers for results}
+@ 
+PSICQUIC queries apparently expect HUGO gene symbols for input.  These
+are translated by each provider into each provider's native
+identifier type, which is nearly always a protein id of some sort.
+The results returned use the protein identifier native to each
+provider -- but see notes on the use of our IDMapper class for
+converting these protein identifiers to gene symbols and entrez
+geneIDs.  If you submit a protein identifier in a query, it is
+apparently used without translation, and the interactions returned are
+limited to those which use exactly the
+protein identifier you supplied.  Thus the use of gene symbols is
+recommended for all of your calls to the \emph{interactions} method.
+
+Here is a sampling of the identifiers returned by the PSICQUIC providers:
+
+\begin{itemize}
+   \item refseq:NP\_001123512
+   \item uniprotkb:Q16820
+   \item string:9606.ENSP00000373992|uniprotkb:Q9UMJ4
+   \item entrez gene/locuslink:2041|BIOGRID:108355
+ \end{itemize}
+
+ 
+\section{Add Entrez GeneIDs and HUGO Gene Symbols}
+
+Though informative, this heterogeneity along with the frequent absence of entrez 
+geneIDs and gene symbols limits the immediate usefulness of these results for
+many prospective users.   We attempt to remedy this with the IDMapper class,which uses
+biomaRt and some simple parsing strategies to map these lengthy identifiers into
+both geneID and gene symobl.  At this point in the development of the
+PSICQUIC package, this step -- which adds four columns to the results
+data.frame -- must be done explicitly, and is currently limited to human
+identifiers only.  Support for additional species will be added.
+
+<<addGeneNames>>=
+idMapper <- IDMapper("9606")
+tbl.myc <- addGeneInfo(idMapper,tbl.myc)
+print(head(tbl.myc$A.sym))
+print(head(tbl.myc$B.sym))
+@ 
+
+\section{Retrieve Interactions Among a Set of Genes}
+If the \emph{id} argument to the \emph{interactions} method contains two or more 
+gene symbols, then all interactions among all possible pairs of those genes will 
+be retrieved.  Keep in mind that the number of unique combinations grows larger non-linearly
+with the number of genes supplied, and that each unique pair becomes a distinct 
+query to each of the specified providers.
+\scriptsize{
+<<threeGenes>>=
+tbl.3 <- interactions(psicquic, id=c("ALK", "JAK3", "SHC3"),
+                      species="9606", quiet=TRUE)
+tbl.3g <- addGeneInfo(idMapper, tbl.3)
+tbl.3gd <- with(tbl.3g, as.data.frame(table(detectionMethod, type, A.sym, B.sym, provider)))
+print(tbl.3gd <- subset(tbl.3gd, Freq > 0))
+@ 
+}
+
+
+
+
+\section{References}
+
+\begin{itemize}
+
+\item Aranda, Bruno, Hagen Blankenburg, Samuel Kerrien, Fiona SL
+  Brinkman, Arnaud Ceol, Emilie Chautard, Jose M. Dana et
+  al. "PSICQUIC and PSISCORE: accessing and scoring molecular
+  interactions." Nature methods 8, no. 7 (2011): 528-529.
+
+\item Agrawal, Pooja, Kebing Yu, Arthur R. Salomon, and John
+  M. Sedivy. "Proteomic profiling of Myc-associated proteins." Cell
+  Cycle 9, no. 24 (2010): 4908-4921.
+
+\end{itemize}
+
+
+\end{document}
+
+

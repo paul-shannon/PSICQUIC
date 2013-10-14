@@ -1,0 +1,13 @@
+Package: PSICQUIC
+Type: Package
+Title: Protemics Standard Initiative Common QUery InterfaCe
+Version: 0.99.16
+Date: 2013-10-11
+Author: Paul Shannon
+Maintainer: Paul Shannon<pshannon@fhcrc.org>
+Depends: R (>= 2.15.0), methods, IRanges, biomaRt, BiocGenerics
+Imports: RCurl
+Description: PSICQUIC is a project within the HUPO Proteomics Standard Initiative
+ (HUPO-PSI).  It  standardises programmatic access to molecular interaction databases.
+License: Apache License 2.0
+BiocViews: DataImport, GraphsAndNetworks, ConnectTools
