@@ -160,9 +160,11 @@ method, species, publication identifier, and source database.
       # the language is defined here:
       # http://code.google.com/p/psicquic/wiki/MiqlReference27
 
-   tbl.3 <- rawQuery(psicquic, "BioGrid", "identifier:ALK AND species:9606")
-      # what publications?
-   table(tbl.3$V8)
+   if("BioGrid" \%in\% providers(psicquic)){
+      tbl.3 <- rawQuery(psicquic, "BioGrid", "identifier:ALK AND species:9606")
+         # what publications?
+      table(tbl.3$V8)
+      }
 }
 
 \seealso{

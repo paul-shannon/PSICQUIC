@@ -12,8 +12,8 @@
   (molecular interaction query language) query but without needing to
   obtain per-provider URLs.   The sixteen columns of data are returned
   in a data.frame without column titles.
-  
 }
+
 \usage{
 \S4method{rawQuery}{PSICQUIC}(object, provider, rawArgs)
 }
@@ -51,21 +51,29 @@
 \author{Paul Shannon}
 
 \examples{
-  psicquic <- PSICQUIC()
-  providers(psicquic)
-      # query all providers for all known Myc interactions
-  tbl <- rawQuery(psicquic, "BioGrid", "identifier:ALK AND species:9606")
+    psicquic <- PSICQUIC()
+    providers <- providers(psicquic)
 
-      # what publications?
-  table(tbl$V8)
+       # query BioGrid for all known ALK interactions
 
-  rawArgs.1 <- "identifier:(ALK AND MAP3K3) AND species:9606"
-  tbl.2 <- rawQuery(psicquic, "iRefIndex", rawArgs.1)
+    if("BioGrid" \%in\% providers){
+        tbl.1 <- rawQuery(psicquic, providers[1], "identifier:ALK AND species:9606")
+          # what publications?
+        table(tbl.1$V8)
+        }
 
-  rawArgs.2 <- paste(rawArgs.1, " AND pubid:(15657099 OR 14743216)", sep="")
-  tbl.3 <- rawQuery(psicquic, "iRefIndex", rawArgs.2)
+      # query the iRefIndex provider for interactions between
+      # two specified ids.  then further contrain by publication.
+
+    if("iRefIndex" \%in\% providers){
+       rawArgs.1 <- "identifier:(ALK AND MAP3K3) AND species:9606"
+       tbl.2 <- rawQuery(psicquic, "iRefIndex", rawArgs.1)
+       rawArgs.2 <- paste(rawArgs.1, " AND pubid:(15657099 OR 14743216)", sep="")
+       tbl.3 <- rawQuery(psicquic, "iRefIndex", rawArgs.2)
+       }
 
 }
+
 \seealso{
   providers,
   interactions,

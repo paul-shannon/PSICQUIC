@@ -125,12 +125,16 @@
                         provider=providers(psicquic)[1:3])
 
       # all Myc/EP400 interactions known to BioGrid
-  tbl.2 <- interactions(psicquic, c("Myc", "EP400"), species="9606",
-                        provider="BioGrid")
+      # make sure that BioGrid is currently available
+
+  if("BioGrid" \%in\% providers(psicquic))
+     tbl.2 <- interactions(psicquic, c("Myc", "EP400"), species="9606",
+                           provider="BioGrid")
 
       # or those between Myc and any other molecule, detected by
-      # the "pull down" proteomics techniqe and judged to be
+      # the "pull down" proteomics technique and judged to be
       # a "direct interaction"
+
   tbl.3 <- interactions(psicquic, "Myc", species="9606",
                         detectionMethod="pull down",
                         type="direct interaction")
