@@ -1,0 +1,5 @@
+--- multi-species queries (23 dec 2013)
+see test_PSICQUIC explore_multiSpeciesQuery.  want to obtain interactions restricted to
+imantib and ABL1, in species "-" and human only.
+might need to broaden the possible meanings of the "speciesExclusive" argument
+to the interactions method.
