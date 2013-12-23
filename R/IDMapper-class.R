@@ -206,8 +206,30 @@ setGeneric("addGeneInfo", signature="object",
 
     tbl.refseqs
 
-
 } # .translate.refseq
+#-------------------------------------------------------------------------------
+.translate.geneSymbol <- function(mart, entries)
+{
+    tbl.geneSymbol <- data.frame(id=character(0), geneID=character(0),
+                                 symbol=character(0), raw.id=character(0))
+    if(length(entries) == 0)
+        return(tbl.refseq)
+
+    refseqs <- gsub(".*refseq:([A-Z0-9_]*).*", "\\1", entries)
+    names(refseqs) <- entries
+    tbl.refseqs <- getBM(filters="refseq_peptide", values=refseqs,
+                          attributes=c("refseq_peptide", "entrezgene",
+                                       "hgnc_symbol"),
+                          mart=mart)
+    colnames(tbl.refseqs) <- c("id", "geneID", "symbol")
+    raw.ids <- names(refseqs)[match(tbl.refseqs$id, as.character(refseqs))]
+    tbl.refseqs$raw.id <- raw.ids
+
+    tbl.refseqs$geneID <- as.character(tbl.refseqs$geneID)
+
+    tbl.refseqs
+
+} # .translate.geneSymbol
 #-------------------------------------------------------------------------------
 .translateAll <- function(mart, raw.ids)
 {
@@ -239,6 +261,7 @@ setMethod ("addGeneInfo", signature=c(object="IDMapper"),
 
    function(object, tbl.interactions) {
 
+     #stopifnot(
      raw.ids <- unique(c(tbl.interactions$A, tbl.interactions$B))
      
      tbl.xref <- .translateAll(object@mart, raw.ids)
@@ -263,7 +286,6 @@ setMethod ("addGeneInfo", signature=c(object="IDMapper"),
      B.sym <- as.character(syms[B])
      A.geneID <- as.character(geneIDs[A])
      B.geneID <- as.character(geneIDs[B])
-     
      cbind(tbl.interactions, A.sym, B.sym, A.geneID, B.geneID,
            stringsAsFactors=FALSE)
 
