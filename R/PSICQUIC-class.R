@@ -323,7 +323,8 @@ setMethod ("interactions", "PSICQUIC",
                          pubIDString, typeString)
 
     if(!quiet) .printf("PSICQUIC:::.runQuery: %s", query.url)
-    return(.retrieveData(query.url, quiet))
+    result <- .retrieveData(query.url, quiet)
+    return(result)
 
 } # .runQuery
 #-------------------------------------------------------------------------------
@@ -339,7 +340,8 @@ setMethod ("rawQuery", "PSICQUIC",
        base.url <- df[provider, "url"]
        fixed.site.url <- sub("psicquic$", "current/search/query/", base.url)
        complete.url <- sprintf("%s%s", fixed.site.url, rawArgs)
-       return(.retrieveData(complete.url))
+       result <- .retrieveData(complete.url)
+       return(result)
        })
 
 #-------------------------------------------------------------------------------
@@ -406,7 +408,7 @@ setMethod ("rawQuery", "PSICQUIC",
 {
     found.in.a <- c()
     found.in.b <- c()
-    
+
     for(aSpecies in species){
         a.matches <- grep(aSpecies, tbl[,10])
         b.matches <- grep(aSpecies, tbl[,11])
