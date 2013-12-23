@@ -16,6 +16,9 @@ human <- "9606"
 rat   <- "10116"
 stickleback <- "69293"
 #-------------------------------------------------------------------------------
+if(!exists("psicquic"))
+    psicquic <- PSICQUIC()
+#-------------------------------------------------------------------------------
 paulsTests <- function()
 {
     test_initialConditions()
@@ -35,6 +38,7 @@ paulsTests <- function()
     test_retrieveByInteractionType()
     test_retrieveByDetectionMethod()
     test_retrieveBySpeciesId()
+    test_smallMoleculeWithoutSpeciesDesignation()
     
 } # paulsTests
 #-------------------------------------------------------------------------------
@@ -547,4 +551,94 @@ test_handleEmbeddedSingleQuotes <- function()
     checkEquals(nrow(tbl), raw.row.count)
 
 } # test_handleEmbeddedSingleQuotes
+#-------------------------------------------------------------------------------
+# if species for a or b is unspecified, probably by the designation "-",
+# we want to make sure that we accept the accompanying interaction
+# one case where this occurs:  ChEMBL, where a drug belongs to
+# to no species.  the current solution is to issue the query without
+# species restriction.  
+
+test_smallMoleculeWithoutSpeciesDesignation <- function()
+{
+    print("--- test_smallMoleculeWithoutSpeciesDesignation")
+    psicquic <- PSICQUIC()
+    tbl.chembl <- interactions(psicquic, id="imatinib",
+                               provider="ChEMBL",
+                               speciesExclusive=FALSE,
+                               quiet=FALSE)
+    hit.count <- nrow(tbl.chembl)
+    checkTrue(hit.count > 100)   # 141 on (23 dec 2013)
+    freq <- with(tbl.chembl, as.list(table(c(taxonA, taxonB))))
+
+       # 3 species:  "-" indicates "not assigned" or "unspecified"
+    checkEquals(sort(names(freq)), "-", "taxid:10090(mouse)", "taxid:9606(human)")
+
+       # since the query is only for the drug imatinib, every returned row
+       # will include it, and thus the "unassigned" species token should
+       # be found once in every row -- though perhaps sometimes in
+       # taxonA and sometimes in taxonB
+    
+    checkEquals(hit.count, freq[["-"]])
+    
+    
+} # test_smallMoleculeWithoutSpeciesDesignation
+#-------------------------------------------------------------------------------
+# multi-species queries are, in general, less interesting than single-species
+# queries, with two important exceptions:
+# 
+#   1) infection
+#   2) small-molecule protein interactions
+#
+# this exploratory function identifies the ins and outs of case 2, using the
+# ChEMBL data source
+#    ChEMBL or ChEMBLdb is a manually curated chemical database of
+#     bioactive molecules with drug-like properties.[1] It is maintained
+#     by the European Bioinformatics Institute (EBI), based on the
+#     Wellcome Trust Genome Campus, Hinxton, UK.
+#
+explore_multiSpeciesQuery <- function()
+{
+    print("--- explore_multiSpeciesQuery")
+
+    source <- "ChEMBL"
+    base.url <- PSICQUIC:::providerUrl(psicquic, source)
+    fixed.site.url <- sub("psicquic$", "current/search/query/", base.url)
+    #args <- "identifier:imatinib"   
+    args <- sprintf("identifier:(%s AND %s)", "imatinib", "ABL1")
+    full.url <- sprintf("%s%s", fixed.site.url, args)
+    tbl <- PSICQUIC:::.retrieveData(full.url)
+       # no factors!
+    colnames(tbl) <- c("A","B","altA","altB","aliasA","aliasB","detectionMethod",
+                       "firstAuthor","publicationID","taxonA","taxonB","type",
+                       "sourceDatabases","interactionID","confidenceScore")#,"provider")
+    coi <- c("A", "B", "aliasA", "aliasB", "taxonA", "taxonB")
+    coi <- c("A", "B", "taxonA", "taxonB")
+
+    tbl <- unique(tbl[, coi])
+    checkEquals(tbl$taxonA, rep("-", 3))
+    checkEquals(sort(tbl$taxonB), c("taxid:10090(mouse)","taxid:9606(human)",
+                                    "taxid:9606(human)"))
+
+    tbl.1 <- interactions(psicquic, id=c("imatinib","ABL1"), provider="ChEMBL")
+    freq <- as.list(table(c(tbl.1$taxonA, tbl.1$taxonB)))
+    checkEquals(sum(as.integer(freq)), 2 * nrow(tbl.1))
+
+       # identify a test query, and ensure that it is actually
+       # a meaninful test.  the species-neutral query produces
+       # at least one human, one mouse, and many "-" (unspecified)
+       # for imatinib
+    
+    checkTrue(length(grep("mouse", names(freq))) > 0)   # just 1
+    checkTrue(length(grep("human", names(freq))) > 0)   # 35
+    checkTrue(freq[["-"]] > 30)  # (36 23 dec 2013)
+
+       # should get 35 interactions, with the one mouse interaction
+       # left out.   currently returns zero...
+    
+    tbl.human <- interactions(psicquic, id=c("imatinib","ABL1"),
+                              species=c("9606", "-"),
+                              provider="ChEMBL")
+    
+
+} # explore_multiSpeciesQuery
 #-------------------------------------------------------------------------------
