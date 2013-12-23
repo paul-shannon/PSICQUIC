@@ -74,7 +74,7 @@ test_.categorize <- function()
 #-------------------------------------------------------------------------------
 test_.translate.uniprotkb <- function()
 {
-    print("--- test_.translate.unikprotkb")
+    print("--- test_.translate.uniprotkb")
     
     rawIDs <- sampleIDs()
     if(!exists("mart")){
@@ -86,7 +86,7 @@ test_.translate.uniprotkb <- function()
     x <- PSICQUIC:::.categorize(rawIDs)$uniprotkb
     tbl.x <- PSICQUIC:::.translate.uniprotkb(mart, x)
     checkEquals(tbl.x, data.frame(id="P51532", geneID="6597", symbol="SMARCA4",
-                                 raw.id="uniprotkb:P51532"))
+                                 raw.id="uniprotkb:P51532", stringsAsFactors=FALSE))
 
 } # test_.translate.uniprotkb
 #-------------------------------------------------------------------------------
@@ -105,7 +105,8 @@ test_.translate.string <- function()
     checkEquals(tbl.x, data.frame(id="ENSP00000223500",
                                   geneID="51510",
                                   symbol="CHMP5",
-                                  raw.id="string:9606.ENSP00000223500|uniprotkb:Q9Y323"))
+                                  raw.id="string:9606.ENSP00000223500|uniprotkb:Q9Y323",
+                                  stringsAsFactors=FALSE))
 
 } # test_.translate.uniprotkb
 #-------------------------------------------------------------------------------
@@ -124,7 +125,8 @@ test_.translate.ensemblGene <- function()
     checkEquals(tbl.x, data.frame(id="ENSG00000104765",
                                   geneID="665",
                                   symbol="BNIP3L",
-                                  raw.id="ensembl:ENSG00000104765"))
+                                  raw.id="ensembl:ENSG00000104765",
+                                  stringsAsFactors=FALSE))
 
 
 } # test_.translate.ensemblGene
@@ -144,7 +146,8 @@ test_.translate.ensemblProt <- function()
     checkEquals(tbl.x, data.frame(id="ENSP00000350720",
                                   geneID="6597",
                                   symbol="SMARCA4",
-                                  raw.id="ensembl:ENSP00000350720"))
+                                  raw.id="ensembl:ENSP00000350720",
+                                  stringsAsFactors=FALSE))
 
 
 } # test_.translate.ensemblProt
@@ -166,7 +169,8 @@ test_.translate.locuslink <- function()
     checkEquals(tbl.x, data.frame(id=6597,
                                   geneID="6597",
                                   symbol="SMARCA4",
-                                  raw.id="entrez gene/locuslink:6597|BIOGRID:112481"))
+                                  raw.id="entrez gene/locuslink:6597|BIOGRID:112481",
+                                  stringsAsFactors=FALSE))
 
 
 } # test_.translate.locuslink
@@ -188,7 +192,8 @@ test_.translate.refseq <- function()
     checkEquals(tbl.x, data.frame(id="NP_001167455",
                                   geneID="29117",
                                   symbol="BRD7",
-                                  raw.id="refseq:NP_001167455"))
+                                  raw.id="refseq:NP_001167455",
+                                  stringsAsFactors=FALSE))
 
 } # test_.translate.refseq
 #-------------------------------------------------------------------------------
