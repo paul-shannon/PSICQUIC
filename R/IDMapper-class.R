@@ -22,7 +22,7 @@ IDMapper <- function(species)
 }
 #-------------------------------------------------------------------------------
 setGeneric("addGeneInfo", signature="object",
-               function(object, tbl.interactions)
+               function(object, tbl)
            standardGeneric("addGeneInfo"))
                             
 #-------------------------------------------------------------------------------
@@ -257,38 +257,58 @@ setGeneric("addGeneInfo", signature="object",
 
 } # .translateAll
 #-------------------------------------------------------------------------------
-setMethod ("addGeneInfo", signature=c(object="IDMapper"),
+setMethod("addGeneInfo", signature=c(object="IDMapper"),
 
-   function(object, tbl.interactions) {
+   function(object, tbl) {
 
-     #stopifnot(
-     raw.ids <- unique(c(tbl.interactions$A, tbl.interactions$B))
+      #browser()
+
+          # default assumption: all rows need geneInfo added
+      unmapped.rows <- seq_len(nrow(tbl))
+
+          # but in fact, some may not
+      some.geneInfo.present <- all(c("A.sym", "B.sym", "A.geneID", "B.geneID")
+                                   %in% colnames(tbl))
+      if(some.geneInfo.present)
+         unmapped.rows <- which(tbl$A.sym == "-")
      
-     tbl.xref <- .translateAll(object@mart, raw.ids)
-        # create two named lists, for fast lookup of tbl.interactions$A and $B
-     syms <- tbl.xref$symbol
-     names(syms) <- tbl.xref$raw.id
+      A <- tbl$A[unmapped.rows]
+      B <- tbl$B[unmapped.rows]
+      
+      raw.ids <- unique(c(A, B))
+     
+      tbl.xref <- .translateAll(object@mart, raw.ids)
 
-     geneIDs <- tbl.xref$geneID
-     names(geneIDs) <- tbl.xref$raw.id
+         # create two named lists, for fast lookup of tbl$A and $B
+      syms <- tbl.xref$symbol
+      names(syms) <- tbl.xref$raw.id
+       
+      geneIDs <- tbl.xref$geneID
+      names(geneIDs) <- tbl.xref$raw.id
 
+      A.sym <- as.character(syms[A])
+      B.sym <- as.character(syms[B])
 
-     max <- nrow(tbl.interactions)
-     a.syms <- vector(length=max)
-     b.syms <- vector(length=max)
-     a.geneIDs <- vector(length=max)
-     b.geneIDs <- vector(length=max)
+      A.geneID <- as.character(geneIDs[A])
+      B.geneID <- as.character(geneIDs[B])
 
-     A <- tbl.interactions$A
-     B <- tbl.interactions$B
+      if(!some.geneInfo.present){
+         empty.column <- rep("-", nrow(tbl))
+         tbl <- cbind(tbl,
+                      A.sym=empty.column,
+                      B.sym=empty.column,
+                      A.geneID=empty.column,
+                      B.geneID=empty.column,
+                      stringsAsFactors=FALSE)
+         }# no previous geneInfo
+       
+      tbl$A.sym[unmapped.rows] <- A.sym
+      tbl$B.sym[unmapped.rows] <- B.sym
+      tbl$A.geneID[unmapped.rows] <- A.geneID
+      tbl$B.geneID[unmapped.rows] <- B.geneID
 
-     A.sym <- as.character(syms[A])
-     B.sym <- as.character(syms[B])
-     A.geneID <- as.character(geneIDs[A])
-     B.geneID <- as.character(geneIDs[B])
-     cbind(tbl.interactions, A.sym, B.sym, A.geneID, B.geneID,
-           stringsAsFactors=FALSE)
-
-     }) # addGeneInfo
+      tbl
+           
+      }) # addGeneInfo
 #-------------------------------------------------------------------------------
 
