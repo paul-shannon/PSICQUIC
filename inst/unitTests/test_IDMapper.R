@@ -3,6 +3,7 @@
 # move these to paulsTests when development slows
 library(PSICQUIC)
 library(RUnit)
+library(org.Hs.eg.db)
 #-------------------------------------------------------------------------------
 if(!exists("mapper"))
     mapper <- IDMapper("9606")
@@ -27,8 +28,12 @@ paulsTests <- function()
     test_.translate.locuslink()
     test_.translate.refseq()
     test_.translateAll()
+
     test_addGeneInfo()
     test_preserveKnownGeneIdentifiers()
+
+    test_addStandardNames()
+    test_preservePreviouslyAssignedStandardNames()
     
 } # paulsTests
 #-------------------------------------------------------------------------------
@@ -287,19 +292,193 @@ test_preserveKnownGeneIdentifiers <- function()
                   confidenceScore="intact-miscore:0.35",
                   provider="IntAct")
 
+    row.3 <- list(A="_6470_1_c",
+                  B="R_GHMT2r",
+                  altA="6470",
+                  altB="-",
+                  aliasA="SHMT1",
+                  aliasB="glycine hydroxymethyltransferase, reversible",
+                  detectionMethod="psi-mi:MI:0046(experimental knowledge based)",
+                  firstAuthor="-",
+                  publicationID="9038835",
+                  taxonA="9606",
+                  taxonB="9606",
+                  type="modifies",
+                  sourceDatabases="recon2",
+                  interactionID="-",
+                  confidenceScore="-",
+                  provider="recon2",
+                  A.sym="-",
+                  B.sym="-",
+                  A.geneID="-",
+                  B.geneID="-",
+                  compartment="c",
+                  a.uniprot="P34896",
+                  a.sboTerm="SBO:0000252",
+                  a.chebi="-",
+                  a.kegg.compound="-",
+                  a.kegg.genes="hsa:6470",
+                  a.kegg.drug="-",
+                  a.hmdb="-",
+                  a.pubchem.substance="-",
+                  reversible="true")
+
     tbl.1 <- as.data.frame(row.1, stringsAsFactors=FALSE)
     tbl.2 <- as.data.frame(row.2, stringsAsFactors=FALSE)
-    tbl <- RefNet:::.smartRbind(tbl.1, tbl.2)    
-    tbl.3 <- addGeneInfo(mapper, tbl)
-    checkIdentical(tbl.1, tbl.3[1,])
-       # second row of returned tbl.3 should match incoming tbl.2, up to the 16th column
+    tbl.3 <- as.data.frame(row.3, stringsAsFactors=FALSE)
+    
+    tbl <- RefNet:::.smartRbind(tbl.1, tbl.2)
+    tbl <- RefNet:::.smartRbind(tbl, tbl.3)
+    
+    tbl.mapped <- addGeneInfo(mapper, tbl)
+
+    checkIdentical(tbl.1, tbl.mapped[1,1:20])
+       # second row of returned tbl.mapped should match incoming tbl.2, up to the 16th column
     checkIdentical(as.list(tbl[2,1:16]), as.list(tbl.2))
        # the last 4 columns should have these identifiers
-    checkEquals(as.list(tbl.3[2,17:20]), list(A.sym="MAP1LC3B",
+    checkEquals(as.list(tbl.mapped[2,17:20]), list(A.sym="MAP1LC3B",
                                               B.sym="SHMT1",
                                               A.geneID="81631",
                                               B.geneID="6470"))
 
+      # row 3 should not change at all.  the interactors are
+      #     a recon2 interaction
+      #     a recon2 modifier, which comes in a form we do not yet
+      #        translate into standard forms
+    
+    checkTrue(all(tbl.mapped[3,] == tbl.3))
+    x <- 99
     
 } # test_preserveKnownGeneIdentifiers
+#-------------------------------------------------------------------------------
+test_addStandardNames <- function()
+{
+    print("--- test_addStandardNames")
+
+    human <- "9606"
+    if(!exists("mapper"))
+       mapper <<- IDMapper(human)
+
+        # work with just the first 10 interactions in the table
+
+    max <- 10
+
+    tbl.mycAugmented <- addStandardNames(mapper, tbl.myc[1:max,])
+    checkEquals(dim(tbl.mycAugmented), c(max, ncol(tbl.myc) + 4))
+    checkEquals(colnames(tbl.mycAugmented)[17:20],
+                c("A.common", "B.common", "A.canonical", "B.canonical"))
+    checkTrue(all(sapply(tbl.mycAugmented,function(column) !is.factor(column))))
+
+
+    geneIds <- with(tbl.mycAugmented, sort(unique(c(A.canonical, B.canonical))))
+    geneSyms <- with(tbl.mycAugmented, sort(unique(c(A.common, B.common))))
+    checkEquals(geneIds, c("10273", "4609", "5204", "5300", "672", "7316", "8841" ))
+
+    checkEquals(sort(as.character(mget(geneIds, org.Hs.egSYMBOL))), geneSyms)
+
+
+} # test_addStandardNames
+#-------------------------------------------------------------------------------
+# take a row from the RefNet gerstein.2012 interactions, which already has
+# gene symbols and geneIDs, and ensure that the IDMapper leaves them intact
+test_preservePreviouslyAssignedStandardNames <- function()
+{
+    print("--- test_preservePreviouslyAssignedStandardNames")
+    
+    row.1 <- list(A="MYC",
+                  B="SHMT1",
+                  altA="4609",
+                  altB="6470",
+                  aliasA="MYC",
+                  aliasB="SHMT1",
+                  detectionMethod="psi-mi:MI:0402(chromatin immunoprecipitation assay)",
+                  firstAuthor="-",
+                  publicationID="gerstein.2012",
+                  taxonA="9606",
+                  taxonB="9606",
+                  type="psi-mi:MI:0407(direct interaction)",
+                  sourceDatabases="gerstein.2012",
+                  interactionID="-",
+                  confidenceScore="-",
+                  provider="gerstein.2012",
+                  A.common="MYC",
+                  B.common="SHMT1",
+                  A.canonical="4609",
+                  B.canonical="6470")
+  
+    row.2 <- list(A="uniprotkb:Q9GZQ8",
+                  B="uniprotkb:P34896",
+                  altA="intact:EBI-373144|uniprotkb:Q6NW02",
+                  altB="intact:EBI-715117|uniprotkb:D3DXD0|uniprotkb:Q9UMD1|uniprotkb:Q9UMD2|uniprotkb:Q96HY0",
+                  aliasA="psi-mi:mlp3b_human(display_long)|uniprotkb:MAP1LC3B(gene name)|psi-mi:MAP1LC3B(display_short)|uniprotkb:MAP1ALC3(gene name synonym)|uniprotkb:Microtubule-associated protein 1 light chain 3 beta(gene name synonym)|uniprotkb:MAP1A/MAP1B light chain 3 B(gene name synonym)|uniprotkb:MAP1 light chain 3-like protein 2(gene name synonym)|uniprotkb:Autophagy-related protein LC3 B(gene name synonym)|uniprotkb:Autophagy-related ubiquitin-like modifier LC3 B(gene name synonym)",
+                  aliasB="psi-mi:glyc_human(display_long)|uniprotkb:Glycine hydroxymethyltransferase(gene name synonym)|uniprotkb:SHMT1(gene name)|psi-mi:SHMT1(display_short)|uniprotkb:Serine methylase(gene name synonym)",
+                  detectionMethod="psi-mi:MI:0007(anti tag coimmunoprecipitation)",
+                  firstAuthor="Behrends et al. (2010)",
+                  publicationID="pubmed:20562859|imex:IM-15184",
+                  taxonA="taxid:9606(human)|taxid:9606(Homo sapiens)",
+                  taxonB="taxid:9606(human)|taxid:9606(Homo sapiens)",
+                  type="psi-mi:MI:0914(association)",
+                  sourceDatabases="psi-mi:MI:0469(IntAct)",
+                  interactionID="intact:EBI-3045543|imex:IM-15184-337",
+                  confidenceScore="intact-miscore:0.35",
+                  provider="IntAct")
+
+    row.3 <- list(A="_6470_1_c",
+                  B="R_GHMT2r",
+                  altA="6470",
+                  altB="-",
+                  aliasA="SHMT1",
+                  aliasB="glycine hydroxymethyltransferase, reversible",
+                  detectionMethod="psi-mi:MI:0046(experimental knowledge based)",
+                  firstAuthor="-",
+                  publicationID="9038835",
+                  taxonA="9606",
+                  taxonB="9606",
+                  type="modifies",
+                  sourceDatabases="recon2",
+                  interactionID="-",
+                  confidenceScore="-",
+                  provider="recon2",
+                  A.common="-",
+                  B.common="-",
+                  A.canonical="-",
+                  B.canonical="-",
+                  compartment="c",
+                  a.uniprot="P34896",
+                  a.sboTerm="SBO:0000252",
+                  a.chebi="-",
+                  a.kegg.compound="-",
+                  a.kegg.genes="hsa:6470",
+                  a.kegg.drug="-",
+                  a.hmdb="-",
+                  a.pubchem.substance="-",
+                  reversible="true")
+
+    tbl.1 <- as.data.frame(row.1, stringsAsFactors=FALSE)
+    tbl.2 <- as.data.frame(row.2, stringsAsFactors=FALSE)
+    tbl.3 <- as.data.frame(row.3, stringsAsFactors=FALSE)
+    
+    tbl <- RefNet:::.smartRbind(tbl.1, tbl.2)
+    tbl <- RefNet:::.smartRbind(tbl, tbl.3)
+    
+    tbl.mapped <- addStandardNames(mapper, tbl)
+
+    checkIdentical(tbl.1, tbl.mapped[1,1:20])
+       # second row of returned tbl.mapped should match incoming tbl.2, up to the 16th column
+    checkIdentical(as.list(tbl[2,1:16]), as.list(tbl.2))
+       # the last 4 columns should have these identifiers
+    checkEquals(as.list(tbl.mapped[2,17:20]), list(A.common="MAP1LC3B",
+                                                   B.common="SHMT1",
+                                                   A.canonical="81631",
+                                                   B.canonical="6470"))
+
+      # row 3 should not change at all.  the interactors are
+      #     a recon2 interaction
+      #     a recon2 modifier, which comes in a form we do not yet
+      #        translate into standard forms
+    
+    checkTrue(all(tbl.mapped[3,] == tbl.3))
+    x <- 99
+    
+} # test_preservePreviouslyAssignedStandardNames
 #-------------------------------------------------------------------------------

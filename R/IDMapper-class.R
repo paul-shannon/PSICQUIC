@@ -25,6 +25,10 @@ setGeneric("addGeneInfo", signature="object",
                function(object, tbl)
            standardGeneric("addGeneInfo"))
                             
+setGeneric("addStandardNames", signature="object",
+               function(object, tbl)
+           standardGeneric("addStandardNames"))
+                            
 #-------------------------------------------------------------------------------
 .categorize <- function(rawIDs)
 {
@@ -261,8 +265,6 @@ setMethod("addGeneInfo", signature=c(object="IDMapper"),
 
    function(object, tbl) {
 
-      #browser()
-
           # default assumption: all rows need geneInfo added
       unmapped.rows <- seq_len(nrow(tbl))
 
@@ -287,10 +289,16 @@ setMethod("addGeneInfo", signature=c(object="IDMapper"),
       names(geneIDs) <- tbl.xref$raw.id
 
       A.sym <- as.character(syms[A])
+
       B.sym <- as.character(syms[B])
 
       A.geneID <- as.character(geneIDs[A])
       B.geneID <- as.character(geneIDs[B])
+
+      A.sym[is.na(A.sym)] <- "-"
+      B.sym[is.na(B.sym)] <- "-"
+      A.geneID[is.na(A.geneID)] <- "-"
+      B.geneID[is.na(B.geneID)] <- "-"
 
       if(!some.geneInfo.present){
          empty.column <- rep("-", nrow(tbl))
@@ -306,6 +314,64 @@ setMethod("addGeneInfo", signature=c(object="IDMapper"),
       tbl$B.sym[unmapped.rows] <- B.sym
       tbl$A.geneID[unmapped.rows] <- A.geneID
       tbl$B.geneID[unmapped.rows] <- B.geneID
+
+      tbl
+           
+      }) # addGeneInfo
+#-------------------------------------------------------------------------------
+setMethod("addStandardNames", signature=c(object="IDMapper"),
+
+   function(object, tbl) {
+
+          # default assumption: all rows need geneInfo added
+      unmapped.rows <- seq_len(nrow(tbl))
+
+          # but in fact, some may not
+      some.geneInfo.present <- all(c("A.common", "B.common", "A.canonical", "B.canonical")
+                                   %in% colnames(tbl))
+      if(some.geneInfo.present)
+         unmapped.rows <- which(tbl$A.common == "-")
+     
+      A <- tbl$A[unmapped.rows]
+      B <- tbl$B[unmapped.rows]
+      
+      raw.ids <- unique(c(A, B))
+     
+      tbl.xref <- .translateAll(object@mart, raw.ids)
+
+         # create two named lists, for fast lookup of tbl$A and $B
+      syms <- tbl.xref$symbol
+      names(syms) <- tbl.xref$raw.id
+       
+      geneIDs <- tbl.xref$geneID
+      names(geneIDs) <- tbl.xref$raw.id
+
+      A.common <- as.character(syms[A])
+
+      B.common <- as.character(syms[B])
+
+      A.canonical <- as.character(geneIDs[A])
+      B.canonical <- as.character(geneIDs[B])
+
+      A.common[is.na(A.common)] <- "-"
+      B.common[is.na(B.common)] <- "-"
+      A.canonical[is.na(A.canonical)] <- "-"
+      B.canonical[is.na(B.canonical)] <- "-"
+
+      if(!some.geneInfo.present){
+         empty.column <- rep("-", nrow(tbl))
+         tbl <- cbind(tbl,
+                      A.common=empty.column,
+                      B.common=empty.column,
+                      A.canonical=empty.column,
+                      B.canonical=empty.column,
+                      stringsAsFactors=FALSE)
+         }# no previous geneInfo
+       
+      tbl$A.common[unmapped.rows] <- A.common
+      tbl$B.common[unmapped.rows] <- B.common
+      tbl$A.canonical[unmapped.rows] <- A.canonical
+      tbl$B.canonical[unmapped.rows] <- B.canonical
 
       tbl
            

@@ -5,6 +5,7 @@ exportMethods(
   providers,
   rawQuery,
   addGeneInfo,
+  addStandardNames,
   show
   )
 
