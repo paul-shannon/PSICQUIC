@@ -117,11 +117,11 @@ method, species, publication identifier, and source database.
 
    idMapper <- IDMapper("9606")
    tbl.0g <- addGeneInfo(idMapper, tbl.0)
-   with(tbl.0g, head(unique(c(A.sym, B.sym))))
+   with(tbl.0g, head(unique(c(A.name, B.name))))
 
       # we see that MAP2K5 is the most frequently mentioned interacator:
 
-   xtab.sym <- with(tbl.0g, table(c(A.sym, B.sym)))
+   xtab.sym <- with(tbl.0g, table(c(A.name, B.name)))
    head(sort(xtab.sym, decreasing=TRUE))
 
       # PSIQUIC uses well-devloped ontologies -- controlled vocabularies --
@@ -153,7 +153,7 @@ method, species, publication identifier, and source database.
    tbl.2g <- addGeneInfo(idMapper, tbl.2)
 
       # how many publications lie behind these interactions?
-   tbl.2g[, c("A.sym", "B.sym", "detectionMethod", "firstAuthor")]
+   tbl.2g[, c("A.name", "B.name", "detectionMethod", "firstAuthor")]
 
       # the package also provides a convenience method for submitting
       # queries in native MIQL (Molecular Interaction Query Language).

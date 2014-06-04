@@ -9,6 +9,10 @@
 \alias{addGeneInfo,IDMapper-method}
 \alias{\S4method{addGeneInfo}{IDMapper}}
 
+\alias{addStandardNames}
+\alias{addStandardNames,IDMapper-method}
+\alias{\S4method{addStandardNames}{IDMapper}}
+
 
 \title{IDMapper}
 
@@ -33,9 +37,12 @@
 \section{Methods}{
   \describe{
      \item{}{
-       \code{addGeneInfo(x,tbl)}: add geneID and symbol for the
+       \code{addGeneInfo(object,tbl)}: add geneID and symbol for the
        A and B columns in the data.frame "tbl", which is expected
        to be a result returned by the interactions method.
+       }
+     \item{}{
+       \code{addStandardNames(object,tbl)}: A.name, A.id, B.name, B.id
        }
     }
   }
@@ -43,7 +50,7 @@
  
 \usage{
 IDMapper(species)
-\S4method{addGeneInfo}{IDMapper}(object, tbl.interactions)
+\S4method{addGeneInfo}{IDMapper}(object, tbl)
 }
 
 \arguments{
@@ -56,7 +63,7 @@ IDMapper(species)
     a \code{PSICQUIC} object.
   }
 
-  \item{tbl.interactions}{
+  \item{tbl}{
     A \code{data.frame} such as one returned by the \code{interactions}
     method.  Columns named \code{A} and \code{B} are required, and
     are presumed to contain PSICQUIC provider identifers in a few
@@ -66,8 +73,8 @@ IDMapper(species)
 }
 
 \value{
-  A copy of the data.frame passed in, with 4 columns added: A.sym,
-  B.sym, A.geneID, B.geneID.
+  A copy of the data.frame passed in, with 4 columns added: A.name,
+  B.name, A.id, B.id.
 
 }
 
