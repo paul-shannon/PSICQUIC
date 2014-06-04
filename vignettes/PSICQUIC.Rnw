@@ -219,8 +219,8 @@ identifiers only.  Support for additional species will be added.
 <<addGeneNames>>=
 idMapper <- IDMapper("9606")
 tbl.myc <- addGeneInfo(idMapper,tbl.myc)
-print(head(tbl.myc$A.sym))
-print(head(tbl.myc$B.sym))
+print(head(tbl.myc$A.name))
+print(head(tbl.myc$B.name))
 @ 
 
 \section{Retrieve Interactions Among a Set of Genes}
@@ -234,7 +234,7 @@ query to each of the specified providers.
 tbl.3 <- interactions(psicquic, id=c("ALK", "JAK3", "SHC3"),
                       species="9606", quiet=TRUE)
 tbl.3g <- addGeneInfo(idMapper, tbl.3)
-tbl.3gd <- with(tbl.3g, as.data.frame(table(detectionMethod, type, A.sym, B.sym, provider)))
+tbl.3gd <- with(tbl.3g, as.data.frame(table(detectionMethod, type, A.name, B.name, provider)))
 print(tbl.3gd <- subset(tbl.3gd, Freq > 0))
 @ 
 }
