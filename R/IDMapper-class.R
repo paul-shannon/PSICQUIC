@@ -88,6 +88,25 @@ setGeneric("addStandardNames", signature="object",
     tbl <- rbind(tbl.uniprot.trembl, tbl.uniprot)
     tbl$geneID <- as.character(tbl$geneID)
 
+        # sometimes (e.g., P34896) we get multiple geneIDs for one protein ID,
+        # which shows up as multiple rows.  handle that here
+
+    dup.ids <- names(which(as.list(table(tbl$id)) > 1))
+    removers <- c()
+
+        # for each dup'd geneID, find and store the numerically larger one/s
+    for(r in seq_len(length(dup.ids))){
+       geneID.int <- as.integer(subset(tbl, id == dup.ids[r])$geneID)
+       biggerThanMin <- geneID.int[which(geneID.int != min(geneID.int))]
+       removers <- c(removers, biggerThanMin)
+       } # for r
+
+       # find the rows with these removers, one or more big, dup'd geneIDs
+    if(length(removers) > 0){
+       indices.to.remove <- match(as.character(removers), tbl$geneID)
+       tbl <- tbl[-indices.to.remove,]
+       } # if length
+
     tbl
 
 } # translate.uniprotkb
@@ -217,7 +236,7 @@ setGeneric("addStandardNames", signature="object",
     tbl.geneSymbol <- data.frame(id=character(0), geneID=character(0),
                                  symbol=character(0), raw.id=character(0))
     if(length(entries) == 0)
-        return(tbl.refseq)
+        return(NA)
 
     refseqs <- gsub(".*refseq:([A-Z0-9_]*).*", "\\1", entries)
     names(refseqs) <- entries
@@ -269,10 +288,10 @@ setMethod("addGeneInfo", signature=c(object="IDMapper"),
       unmapped.rows <- seq_len(nrow(tbl))
 
           # but in fact, some may not
-      some.geneInfo.present <- all(c("A.sym", "B.sym", "A.geneID", "B.geneID")
+      some.geneInfo.present <- all(c("A.name", "B.name", "A.id", "B.id")
                                    %in% colnames(tbl))
       if(some.geneInfo.present)
-         unmapped.rows <- which(tbl$A.sym == "-")
+         unmapped.rows <- which(tbl$A.name == "-")
      
       A <- tbl$A[unmapped.rows]
       B <- tbl$B[unmapped.rows]
@@ -288,32 +307,32 @@ setMethod("addGeneInfo", signature=c(object="IDMapper"),
       geneIDs <- tbl.xref$geneID
       names(geneIDs) <- tbl.xref$raw.id
 
-      A.sym <- as.character(syms[A])
+      A.name <- as.character(syms[A])
 
-      B.sym <- as.character(syms[B])
+      B.name <- as.character(syms[B])
 
-      A.geneID <- as.character(geneIDs[A])
-      B.geneID <- as.character(geneIDs[B])
+      A.id <- as.character(geneIDs[A])
+      B.id <- as.character(geneIDs[B])
 
-      A.sym[is.na(A.sym)] <- "-"
-      B.sym[is.na(B.sym)] <- "-"
-      A.geneID[is.na(A.geneID)] <- "-"
-      B.geneID[is.na(B.geneID)] <- "-"
+      A.name[is.na(A.name)] <- "-"
+      B.name[is.na(B.name)] <- "-"
+      A.id[is.na(A.id)] <- "-"
+      B.id[is.na(B.id)] <- "-"
 
       if(!some.geneInfo.present){
          empty.column <- rep("-", nrow(tbl))
          tbl <- cbind(tbl,
-                      A.sym=empty.column,
-                      B.sym=empty.column,
-                      A.geneID=empty.column,
-                      B.geneID=empty.column,
+                      A.name=empty.column,
+                      B.name=empty.column,
+                      A.id=empty.column,
+                      B.id=empty.column,
                       stringsAsFactors=FALSE)
          }# no previous geneInfo
        
-      tbl$A.sym[unmapped.rows] <- A.sym
-      tbl$B.sym[unmapped.rows] <- B.sym
-      tbl$A.geneID[unmapped.rows] <- A.geneID
-      tbl$B.geneID[unmapped.rows] <- B.geneID
+      tbl$A.name[unmapped.rows] <- A.name
+      tbl$B.name[unmapped.rows] <- B.name
+      tbl$A.id[unmapped.rows] <- A.id
+      tbl$B.id[unmapped.rows] <- B.id
 
       tbl
            
@@ -327,10 +346,10 @@ setMethod("addStandardNames", signature=c(object="IDMapper"),
       unmapped.rows <- seq_len(nrow(tbl))
 
           # but in fact, some may not
-      some.geneInfo.present <- all(c("A.common", "B.common", "A.canonical", "B.canonical")
+      some.geneInfo.present <- all(c("A.name", "B.name", "A.id", "B.id")
                                    %in% colnames(tbl))
       if(some.geneInfo.present)
-         unmapped.rows <- which(tbl$A.common == "-")
+         unmapped.rows <- which(tbl$A.name == "-")
      
       A <- tbl$A[unmapped.rows]
       B <- tbl$B[unmapped.rows]
@@ -346,32 +365,32 @@ setMethod("addStandardNames", signature=c(object="IDMapper"),
       geneIDs <- tbl.xref$geneID
       names(geneIDs) <- tbl.xref$raw.id
 
-      A.common <- as.character(syms[A])
+      A.name <- as.character(syms[A])
 
-      B.common <- as.character(syms[B])
+      B.name <- as.character(syms[B])
 
-      A.canonical <- as.character(geneIDs[A])
-      B.canonical <- as.character(geneIDs[B])
+      A.id <- as.character(geneIDs[A])
+      B.id <- as.character(geneIDs[B])
 
-      A.common[is.na(A.common)] <- "-"
-      B.common[is.na(B.common)] <- "-"
-      A.canonical[is.na(A.canonical)] <- "-"
-      B.canonical[is.na(B.canonical)] <- "-"
+      A.name[is.na(A.name)] <- "-"
+      B.name[is.na(B.name)] <- "-"
+      A.id[is.na(A.id)] <- "-"
+      B.id[is.na(B.id)] <- "-"
 
       if(!some.geneInfo.present){
          empty.column <- rep("-", nrow(tbl))
          tbl <- cbind(tbl,
-                      A.common=empty.column,
-                      B.common=empty.column,
-                      A.canonical=empty.column,
-                      B.canonical=empty.column,
+                      A.name=empty.column,
+                      B.name=empty.column,
+                      A.id=empty.column,
+                      B.id=empty.column,
                       stringsAsFactors=FALSE)
          }# no previous geneInfo
        
-      tbl$A.common[unmapped.rows] <- A.common
-      tbl$B.common[unmapped.rows] <- B.common
-      tbl$A.canonical[unmapped.rows] <- A.canonical
-      tbl$B.canonical[unmapped.rows] <- B.canonical
+      tbl$A.name[unmapped.rows] <- A.name
+      tbl$B.name[unmapped.rows] <- B.name
+      tbl$A.id[unmapped.rows] <- A.id
+      tbl$B.id[unmapped.rows] <- B.id
 
       tbl
            

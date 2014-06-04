@@ -44,10 +44,11 @@ sampleIDs <- function()
       "string:9606.ENSP00000223500|uniprotkb:Q9Y323",
       "refseq:NP_001167455",
       "ensembl:ENSG00000104765",
-      "ensembl:ENSP00000350720"
+      "ensembl:ENSP00000350720",
+      "uniprotkb:P34896"             # maps to two geneIDs, we want the lesser
       )
 
- } # samples
+} # samples
 #-------------------------------------------------------------------------------
 test_ctor <- function()
 {
@@ -77,26 +78,42 @@ test_.categorize <- function()
                   locuslink=1L,
                   refseq=1L,
                   string=1L,
-                  uniprotkb=1L,
+                  uniprotkb=2L,
                   unrecognized=0L))
 
 } # test_.categorize
 #-------------------------------------------------------------------------------
+# uniprotkb:P04637
 test_.translate.uniprotkb <- function()
 {
     print("--- test_.translate.uniprotkb")
     
     rawIDs <- sampleIDs()
     if(!exists("mart")){
-        #mapper <- IDMapper("9606", rawIDs)
         mapper <- IDMapper("9606")
         mart <<- mapper@mart
         }
    
     x <- PSICQUIC:::.categorize(rawIDs)$uniprotkb
+    checkEquals(length(x), 2)
+
     tbl.x <- PSICQUIC:::.translate.uniprotkb(mart, x)
-    checkEquals(tbl.x, data.frame(id="P51532", geneID="6597", symbol="SMARCA4",
-                                 raw.id="uniprotkb:P51532", stringsAsFactors=FALSE))
+    checkEquals(ncol(tbl.x), 4)
+       # sometimes multiple hits. note extra geneID.
+    checkTrue(nrow(tbl.x) >= 2)
+    
+       #       id    geneID  symbol           raw.id
+       # 1 P34896 102466733   SHMT1 uniprotkb:P34896
+       # 2 P34896      6470   SHMT1 uniprotkb:P34896
+       # 3 P51532      6597 SMARCA4 uniprotkb:P51532
+
+    row.1 <- match("6470", tbl.x$geneID)
+    row.2 <- match("6597", tbl.x$geneID)
+
+    checkEquals(as.list(tbl.x[row.1,]),
+                list(id="P34896", geneID="6470", symbol="SHMT1", raw.id="uniprotkb:P34896"))
+    checkEquals(as.list(tbl.x[row.2,]),
+                list(id="P51532", geneID="6597", symbol="SMARCA4", raw.id="uniprotkb:P51532"))
 
 } # test_.translate.uniprotkb
 #-------------------------------------------------------------------------------
@@ -270,10 +287,10 @@ test_preserveKnownGeneIdentifiers <- function()
                   interactionID="-",
                   confidenceScore="-",
                   provider="gerstein.2012",
-                  A.sym="MYC",
-                  B.sym="SHMT1",
-                  A.geneID="4609",
-                  B.geneID="6470")
+                  A.name="MYC",
+                  B.name="SHMT1",
+                  A.id="4609",
+                  B.id="6470")
   
     row.2 <- list(A="uniprotkb:Q9GZQ8",
                   B="uniprotkb:P34896",
@@ -308,10 +325,10 @@ test_preserveKnownGeneIdentifiers <- function()
                   interactionID="-",
                   confidenceScore="-",
                   provider="recon2",
-                  A.sym="-",
-                  B.sym="-",
-                  A.geneID="-",
-                  B.geneID="-",
+                  A.name="-",
+                  B.name="-",
+                  A.id="-",
+                  B.id="-",
                   compartment="c",
                   a.uniprot="P34896",
                   a.sboTerm="SBO:0000252",
@@ -336,10 +353,10 @@ test_preserveKnownGeneIdentifiers <- function()
        # second row of returned tbl.mapped should match incoming tbl.2, up to the 16th column
     checkIdentical(as.list(tbl[2,1:16]), as.list(tbl.2))
        # the last 4 columns should have these identifiers
-    checkEquals(as.list(tbl.mapped[2,17:20]), list(A.sym="MAP1LC3B",
-                                              B.sym="SHMT1",
-                                              A.geneID="81631",
-                                              B.geneID="6470"))
+    checkEquals(as.list(tbl.mapped[2,17:20]), list(A.name="MAP1LC3B",
+                                              B.name="SHMT1",
+                                              A.id="81631",
+                                              B.id="6470"))
 
       # row 3 should not change at all.  the interactors are
       #     a recon2 interaction
@@ -366,12 +383,12 @@ test_addStandardNames <- function()
     tbl.mycAugmented <- addStandardNames(mapper, tbl.myc[1:max,])
     checkEquals(dim(tbl.mycAugmented), c(max, ncol(tbl.myc) + 4))
     checkEquals(colnames(tbl.mycAugmented)[17:20],
-                c("A.common", "B.common", "A.canonical", "B.canonical"))
+                c("A.name", "B.name", "A.id", "B.id"))
     checkTrue(all(sapply(tbl.mycAugmented,function(column) !is.factor(column))))
 
 
-    geneIds <- with(tbl.mycAugmented, sort(unique(c(A.canonical, B.canonical))))
-    geneSyms <- with(tbl.mycAugmented, sort(unique(c(A.common, B.common))))
+    geneIds <- with(tbl.mycAugmented, sort(unique(c(A.id, B.id))))
+    geneSyms <- with(tbl.mycAugmented, sort(unique(c(A.name, B.name))))
     checkEquals(geneIds, c("10273", "4609", "5204", "5300", "672", "7316", "8841" ))
 
     checkEquals(sort(as.character(mget(geneIds, org.Hs.egSYMBOL))), geneSyms)
@@ -401,10 +418,10 @@ test_preservePreviouslyAssignedStandardNames <- function()
                   interactionID="-",
                   confidenceScore="-",
                   provider="gerstein.2012",
-                  A.common="MYC",
-                  B.common="SHMT1",
-                  A.canonical="4609",
-                  B.canonical="6470")
+                  A.name="MYC",
+                  B.name="SHMT1",
+                  A.id="4609",
+                  B.id="6470")
   
     row.2 <- list(A="uniprotkb:Q9GZQ8",
                   B="uniprotkb:P34896",
@@ -439,10 +456,10 @@ test_preservePreviouslyAssignedStandardNames <- function()
                   interactionID="-",
                   confidenceScore="-",
                   provider="recon2",
-                  A.common="-",
-                  B.common="-",
-                  A.canonical="-",
-                  B.canonical="-",
+                  A.name="-",
+                  B.name="-",
+                  A.id="-",
+                  B.id="-",
                   compartment="c",
                   a.uniprot="P34896",
                   a.sboTerm="SBO:0000252",
@@ -467,10 +484,10 @@ test_preservePreviouslyAssignedStandardNames <- function()
        # second row of returned tbl.mapped should match incoming tbl.2, up to the 16th column
     checkIdentical(as.list(tbl[2,1:16]), as.list(tbl.2))
        # the last 4 columns should have these identifiers
-    checkEquals(as.list(tbl.mapped[2,17:20]), list(A.common="MAP1LC3B",
-                                                   B.common="SHMT1",
-                                                   A.canonical="81631",
-                                                   B.canonical="6470"))
+    checkEquals(as.list(tbl.mapped[2,17:20]), list(A.name="MAP1LC3B",
+                                                   B.name="SHMT1",
+                                                   A.id="81631",
+                                                   B.id="6470"))
 
       # row 3 should not change at all.  the interactors are
       #     a recon2 interaction
