@@ -49,6 +49,10 @@ setValidity("PSICQUIC", function(object) {
 PSICQUIC <- function()
 {
    object <- .PSICQUIC()
+   registry.tbl <- .loadRegistry()
+   if(is.na(registry.tbl))
+       return(NA)
+   
    object@df <- .loadRegistry()
 
    object
@@ -82,6 +86,13 @@ setMethod ("providerUrl", signature=c(object="PSICQUIC"),
 .loadRegistry <- function()
 {
     url <- "http://www.ebi.ac.uk/Tools/webservices/psicquic/registry/registry?action=ACTIVE&format=txt"
+
+    if(!url.exists(url)){
+       warning(sprintf("failed to get response from PSICQUIC registry at %s", url))
+       return(NA)
+      }
+
+    
     emptyResult <- DataFrame(url=vector(mode="character", length=0),
                              row.names=character(0))
 
