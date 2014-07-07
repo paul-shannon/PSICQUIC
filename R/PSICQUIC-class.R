@@ -50,7 +50,8 @@ PSICQUIC <- function()
 {
    object <- .PSICQUIC()
    registry.tbl <- .loadRegistry()
-   if(is.na(registry.tbl))
+
+   if(all(is.na(registry.tbl)))
        return(NA)
    
    object@df <- .loadRegistry()
