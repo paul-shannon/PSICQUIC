@@ -32,8 +32,8 @@ paulsTests <- function()
     test_addGeneInfo()
     test_preserveKnownGeneIdentifiers()
 
-    test_addStandardNames()
-    test_preservePreviouslyAssignedStandardNames()
+    #test_addStandardNames()
+    #test_preservePreviouslyAssignedStandardNames()
     
 } # paulsTests
 #-------------------------------------------------------------------------------
@@ -268,7 +268,7 @@ test_addGeneInfoMinimalTable <- function()
 #-------------------------------------------------------------------------------
 # take a row from the RefNet gerstein.2012 interactions, which already has
 # gene symbols and geneIDs, and ensure that the IDMapper leaves them intact
-test_preserveKnownGeneIdentifiers <- function()
+no_test_preserveKnownGeneIdentifiers <- function()
 {
     print("--- test_preserveKnownGeneIdentifiers")
     row.1 <- list(A="MYC",
@@ -398,7 +398,7 @@ test_addStandardNames <- function()
 #-------------------------------------------------------------------------------
 # take a row from the RefNet gerstein.2012 interactions, which already has
 # gene symbols and geneIDs, and ensure that the IDMapper leaves them intact
-test_preservePreviouslyAssignedStandardNames <- function()
+no_test_preservePreviouslyAssignedStandardNames <- function()
 {
     print("--- test_preservePreviouslyAssignedStandardNames")
     
