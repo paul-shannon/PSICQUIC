@@ -2,6 +2,10 @@ setClass("IDMapper",
          slots=c(species="character",
                  mart="Mart"))
 
+#----------------------------------------------------------------------------------------------------
+#url.exists <- function(url) {
+#   HEAD(url)$headers$status == "200"
+#   }
 #-------------------------------------------------------------------------------
 IDMapper <- function(species)
 {
@@ -9,12 +13,23 @@ IDMapper <- function(species)
         stop("IDMapper only supports human ID mapping for now")
         }
 
+     # check (separately) 3 steps which must be working to create an IDMapper
+   message("checking for biomart access...")
+   host="www.biomart.org"
+   url <- paste0("http://", host)
+   message(sprintf("   does '%s' respond?", url))
+   stopifnot(url.exists(url))
+   message("   creating ensembl mart");
+   mart <- useMart(biomart = "ensembl", host=host)
+   dataset <- "hsapiens_gene_ensembl"
+   message(sprintf("   %s dataset provided?", dataset))
+   stopifnot(dataset %in% listDatasets(mart)[,1])
 
     self <- new("IDMapper")
     if(species == "9606"){
        self@species <- "9606"
        message("connecting to biomart...")
-       self@mart <- useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl")
+       self@mart <- useMart(biomart="ensembl", dataset=dataset)
        }
 
     self
