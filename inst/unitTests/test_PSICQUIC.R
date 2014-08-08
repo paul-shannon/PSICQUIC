@@ -174,15 +174,17 @@ test_rawQuery <- function()
     if("BioGrid" %in% available.providers){
         rawArgs <- sprintf("%s AND type:physical association", rawArgs.0)
         tbl.6 <- rawQuery(psicquic, "BioGrid", rawArgs)
-        checkEquals(dim(tbl.6), c(55,15))
+        checkTrue(nrow(tbl.6) > 50)  # 1331 (aug 2014)  but just 55 (dec 2013)
+        checkEquals(ncol(tbl.6), 15)
         
         rawArgs <- sprintf("%s AND type:direct interaction", rawArgs.0)
         tbl.7 <- rawQuery(psicquic, "BioGrid", rawArgs)
-        checkEquals(dim(tbl.7), c(7,15))
+        checkTrue(nrow(tbl.7) >= 15) # 15 (dec 2013) 801 (aug 2014)
+        checkEquals(ncol(tbl.7), 15)
     
         rawArgs <- sprintf("%s AND type:(direct interaction OR physical association)", rawArgs.0)
         tbl.8 <- rawQuery(psicquic, "BioGrid", rawArgs)
-        checkEquals(dim(tbl.8), c(62,15))
+        checkTrue(nrow(tbl.8) >= 62) # 62 (dec 2013)  2184 (aug 2014)
         } # if BioGrid
 
 
@@ -412,7 +414,8 @@ test_retrieveByInteractionType <- function()
         return(sprintf("%s not available", provider))
     
     tbl <- interactions(psicquic, id="ALK", species="9606", provider="BioGrid")
-    checkEquals(dim(tbl), c(62,16))
+    checkTrue(nrow(tbl) > 50)
+    checkEquals(ncol(tbl), 16)
 
        # BioGrid ALK yields these interaction types
        #   psi-mi:MI:0407(direct interaction) 7
@@ -422,13 +425,15 @@ test_retrieveByInteractionType <- function()
                           species="9606", provider="BioGrid",
                           type="physical association", quiet=TRUE)
 
-    checkEquals(dim(tbl.1), c(55,16))
+    checkTrue(nrow(tbl.1) > 50)
+    checkEquals(ncol(tbl.1), 16)
 
     tbl.2 <- interactions(psicquic, id="ALK",
                           species="9606", provider="BioGrid",
                           type="direct interaction", quiet=TRUE)
 
-    checkEquals(dim(tbl.2), c(7,16))
+    checkTrue(nrow(tbl.2) > 5)
+    checkEquals(ncol(tbl.2), 16)
 
     tbl.3 <- interactions(psicquic, id="ALK",
                           species="9606", provider="BioGrid",
@@ -436,7 +441,8 @@ test_retrieveByInteractionType <- function()
                                             "direct interaction"),
                           quiet=TRUE)
 
-    checkEquals(dim(tbl.3), c(62,16))
+    checkTrue(nrow(tbl.3) > 50)
+    checkEquals(ncol(tbl.3), 16)
 
 } # test_retrieveByInteractionType
 #-------------------------------------------------------------------------------
