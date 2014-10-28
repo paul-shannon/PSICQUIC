@@ -44,7 +44,8 @@ sampleIDs <- function()
       "string:9606.ENSP00000223500|uniprotkb:Q9Y323",
       "refseq:NP_001167455",
       "ensembl:ENSG00000104765",
-      "ensembl:ENSP00000350720",
+      #"ensembl:ENSP00000350720",
+      "ensembl:ENSP00000257290",
       "uniprotkb:P34896"             # maps to two geneIDs, we want the lesser
       )
 
@@ -170,10 +171,10 @@ test_.translate.ensemblProt <- function()
    
     x <- PSICQUIC:::.categorize(rawIDs)$ensemblProt
     tbl.x <- PSICQUIC:::.translate.ensemblProt(mart, x)
-    checkEquals(tbl.x, data.frame(id="ENSP00000350720",
-                                  geneID="6597",
-                                  symbol="SMARCA4",
-                                  raw.id="ensembl:ENSP00000350720",
+    checkEquals(tbl.x, data.frame(id="ENSP00000257290",
+                                  geneID="5156",
+                                  symbol="PDGFRA",
+                                  raw.id="ensembl:ENSP00000257290",
                                   stringsAsFactors=FALSE))
 
 
@@ -268,7 +269,7 @@ test_addGeneInfoMinimalTable <- function()
 #-------------------------------------------------------------------------------
 # take a row from the RefNet gerstein.2012 interactions, which already has
 # gene symbols and geneIDs, and ensure that the IDMapper leaves them intact
-no_test_preserveKnownGeneIdentifiers <- function()
+test_preserveKnownGeneIdentifiers <- function()
 {
     print("--- test_preserveKnownGeneIdentifiers")
     row.1 <- list(A="MYC",
