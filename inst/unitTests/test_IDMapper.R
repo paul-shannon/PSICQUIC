@@ -345,8 +345,32 @@ test_preserveKnownGeneIdentifiers <- function()
     tbl.2 <- as.data.frame(row.2, stringsAsFactors=FALSE)
     tbl.3 <- as.data.frame(row.3, stringsAsFactors=FALSE)
     
-    tbl <- RefNet:::.smartRbind(tbl.1, tbl.2)
-    tbl <- RefNet:::.smartRbind(tbl, tbl.3)
+       # used to use my improvised RefNet:::.smartRbind at this
+       # point, to create a single data.frame with all columns.
+       # found in the three lists/data.frames hand-crafted above.
+       # this introduces a RefNet dependency into the PSICQUIC
+       # package, clearly undesirable: RefNet depends upon PSICQUIC
+       #
+       # so now using hadley's rbind.fill instead, arguably a better
+       # choice anyway.  one difference must be accomodated:
+       # rbind.fill sensibly inserts NAs  in empty cells; smartRbind
+       # uses "-" since that is PSICQUIC's  token for missing values.
+       # we take that extra step below
+
+    #tbl <- RefNet:::.smartRbind(tbl.1, tbl.2)
+    #tbl <- RefNet:::.smartRbind(tbl, tbl.3)
+
+    tbl <- rbind.fill(tbl.1, tbl.2)
+    tbl <- rbind.fill(tbl, tbl.3)
+    
+    cols <- colnames(tbl)
+    for(col in cols){
+       column.as.list <- tbl[, col]
+       na.entries <- which (is.na(column.as.list))
+       #printf("%d na.entries in col %s", length(na.entries), col)
+       if(length(na.entries) > 0)
+          tbl[na.entries, col] <- "-"
+       } # for col
     
     tbl.mapped <- addGeneInfo(mapper, tbl)
 

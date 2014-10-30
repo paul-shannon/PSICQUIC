@@ -688,3 +688,14 @@ explore_multiSpeciesQuery <- function()
 
 } # explore_multiSpeciesQuery
 #-------------------------------------------------------------------------------
+test_GeneMANIA <- function()
+{
+   psicquic <- PSICQUIC()
+   tbl <- interactions(psicquic, species="9606", id="TP53", provider="GeneMANIA")
+
+   # this test fails now (30 oct 2014) due to GeneMANIA problems
+   # checkTrue(nrow(tbl) > 0)  
+
+    
+} # test_genemania
+#-------------------------------------------------------------------------------

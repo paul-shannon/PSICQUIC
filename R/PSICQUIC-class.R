@@ -142,11 +142,12 @@ setMethod ("interactions", "PSICQUIC",
             requested.providers <- providers(object)
 
        actual.providers <- intersect(providers(object), requested.providers)
+
           # we discourage GeneMANIA as a default provider, but
           # permit for those asking for it explicilty
 
        if("GeneMANIA" %in% requested.providers &&
-          "GeneMANIA" %in% provider(object))
+          "GeneMANIA" %in% rownames(object@df))
           actual.providers <- c(actual.providers, "GeneMANIA")
 
        unrecognized.providers <- setdiff(requested.providers, actual.providers)
