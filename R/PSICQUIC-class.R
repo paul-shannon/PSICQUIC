@@ -159,7 +159,14 @@ setMethod ("interactions", "PSICQUIC",
        result <- data.frame(stringsAsFactors=FALSE)
        pairs <- .enumerateSearchPairs(id)
        pair.count <- length(pairs$a)
-
+       
+       if(pair.count > 1) { # warn user that possibly very many separate queries are needed
+           s <- sprintf("About to execute %d PSICQUIC queries (%d gene pairings x %d provider/s)",
+                        pair.count * length(actual.providers), pair.count,
+                        length(actual.providers))
+           message(s)
+           }
+       
        for(provider in actual.providers){
            if(!quiet) .printf("retrieving from %s", provider)
            df <- object@df
