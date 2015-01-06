@@ -1,5 +1,6 @@
 .PSICQUIC <- setClass("PSICQUIC",
-                      slots=c(df="DataFrame"))
+                      slots=c(df="DataFrame",
+                              providers="character"))
 
 setGeneric("interactions", signature="object",
              function(object,
@@ -46,7 +47,7 @@ setValidity("PSICQUIC", function(object) {
     
 })
 #-------------------------------------------------------------------------------
-PSICQUIC <- function()
+PSICQUIC <- function(test=FALSE)
 {
    object <- .PSICQUIC()
    registry.tbl <- .loadRegistry()
@@ -55,6 +56,21 @@ PSICQUIC <- function()
        return(NA)
    
    object@df <- .loadRegistry()
+   providers <- rownames(object@df)
+   
+   deleters <- grep("GeneMANIA", providers, ignore.case=TRUE)
+       # GeneMANIA too voluminous, too slow, often simply does not work
+   if(length(deleters) > 0)
+      providers <- providers[-deleters]
+
+   if(test){ # to test robustness against missing providers:
+      count <- length(providers)
+      selected <- sample(1:count, 3)
+      providers <- providers[selected]
+      printf("test providers: %s", paste(providers, collapse=","))
+      }
+
+   object@providers <- providers
 
    object
 
@@ -70,8 +86,7 @@ setMethod ("count", signature=c(object="PSICQUIC"),
 setMethod ("providers", signature=c(object="PSICQUIC"),
 
    function (object) {
-      providers <- rownames(object@df)
-      providers[providers!="GeneMANIA"]   # too voluminous, too slow
+      object@providers
       })
 
 #-------------------------------------------------------------------------------
@@ -105,6 +120,7 @@ setMethod ("providerUrl", signature=c(object="PSICQUIC"),
         tokenized.lines <- strsplit(lines, "=")
         providers <- sapply(tokenized.lines, "[", 1)
         urls <- sapply(tokenized.lines, "[", 2)
+        #printf(".loadRegistry, providers: %s", paste(providers, collapse=", "))
         return(DataFrame(row.names=providers, url=urls))
         }, error=function(err) {
            print(sprintf("%s, %s", str(err), "server not responding"))
@@ -161,11 +177,11 @@ setMethod ("interactions", "PSICQUIC",
        pair.count <- length(pairs$a)
        
        if(pair.count > 1) { # warn user that possibly very many separate queries are needed
-           s <- sprintf("About to execute %d PSICQUIC queries (%d gene pairings x %d provider/s)",
-                        pair.count * length(actual.providers), pair.count,
-                        length(actual.providers))
-           message(s)
-           }
+         s <- sprintf("About to execute %d PSICQUIC queries (%d gene pairings x %d provider/s)",
+                      pair.count * length(actual.providers), pair.count,
+                      length(actual.providers))
+         message(s)
+         }
        
        for(provider in actual.providers){
            if(!quiet) .printf("retrieving from %s", provider)
