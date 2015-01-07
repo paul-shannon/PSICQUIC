@@ -19,6 +19,8 @@ stickleback <- "69293"
 if(!exists("psicquic"))
     psicquic <- PSICQUIC(test=TRUE)
 #-------------------------------------------------------------------------------
+printf <- function(...) print(noquote(sprintf(...)))
+#-------------------------------------------------------------------------------
 paulsTests <- function()
 {
     test_initialConditions()

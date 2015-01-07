@@ -67,7 +67,7 @@ PSICQUIC <- function(test=FALSE)
       count <- length(providers)
       selected <- sample(1:count, 3)
       providers <- providers[selected]
-      printf("test providers: %s", paste(providers, collapse=","))
+      .printf("test providers: %s", paste(providers, collapse=","))
       }
 
    object@providers <- providers
