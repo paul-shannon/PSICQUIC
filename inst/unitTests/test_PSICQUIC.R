@@ -2,7 +2,6 @@
 #-------------------------------------------------------------------------------
 # options(stringsAsFactors=FALSE)
 #-------------------------------------------------------------------------------
-# move these to paulsTests when development slows
 library(PSICQUIC)
 library(RUnit)
 library(RCurl)
@@ -16,13 +15,11 @@ human <- "9606"
 rat   <- "10116"
 stickleback <- "69293"
 #-------------------------------------------------------------------------------
-if(!exists("psicquic"))
-    psicquic <- PSICQUIC(test=TRUE)
-#-------------------------------------------------------------------------------
 printf <- function(...) print(noquote(sprintf(...)))
 #-------------------------------------------------------------------------------
 paulsTests <- function()
 {
+
     test_initialConditions()
     test_.loadRegistry()
     test_ctor()
@@ -606,6 +603,7 @@ test_handleEmbeddedSingleQuotes <- function()
                             "/webservices/current/search/query",
                             "/identifier:TP53%20AND%20species:9606",
                             sep="")
+
     raw.text <- getURL(mint.tp53.url)
       # first authors O'Connor and O'Neill bolix things up if
       # single quotes are not disabled as quoting characters
