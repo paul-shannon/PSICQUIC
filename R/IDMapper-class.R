@@ -92,7 +92,7 @@ setGeneric("addStandardNames", signature="object",
                                      as.character(uniprots))]
     tbl.uniprot.trembl$raw.id <- raw.ids
     
-    filter <- "uniprot_swissprot_accession"
+    filter <- "uniprot_swissprot"
     columns = c (filter, "entrezgene", "hgnc_symbol");
     tbl.uniprot <- getBM(filters=filter, values=uniprots, attributes=columns,
                          mart=mart)
