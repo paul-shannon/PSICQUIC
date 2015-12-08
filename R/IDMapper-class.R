@@ -15,7 +15,7 @@ IDMapper <- function(species)
 
      # check (separately) 3 steps which must be working to create an IDMapper
    message("checking for biomart access...")
-   host="www.biomart.org"
+   host="www.ensembl.org"
    url <- paste0("http://", host)
    message(sprintf("   does '%s' respond?", url))
    stopifnot(url.exists(url))
@@ -29,7 +29,7 @@ IDMapper <- function(species)
     if(species == "9606"){
        self@species <- "9606"
        message("connecting to biomart...")
-       self@mart <- useMart(biomart="ensembl", dataset=dataset)
+       self@mart <- useMart(biomart="ENSEMBL_MART_ENSEMBL", dataset=dataset)
        }
 
     self
