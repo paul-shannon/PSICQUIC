@@ -39,26 +39,26 @@ IDMapper <- function(species)
 setGeneric("addGeneInfo", signature="object",
                function(object, tbl)
            standardGeneric("addGeneInfo"))
-                            
+
 setGeneric("addStandardNames", signature="object",
                function(object, tbl)
            standardGeneric("addStandardNames"))
-                            
+
 #-------------------------------------------------------------------------------
 .categorize <- function(rawIDs)
 {
 
     x <- rawIDs
-    
+
     string.entries <- grep("string:", x, value=TRUE)
     uniprotkb.entries <- grep("uniprotkb:", x, value=TRUE)
-  
+
         # string entries can be misconstrued as uniprot entries. prevent that
         # here
 
     if(length(string.entries) > 0)
         uniprotkb.entries <- setdiff(uniprotkb.entries, string.entries)
-  
+
     locuslink.entries <- grep("locuslink:", x, value=TRUE)
     refseq.entries <- grep("refseq:", x, value=TRUE)
     ensembl.gene.entries <- grep("ensembl:ENSG", x, value=TRUE)
@@ -67,7 +67,7 @@ setGeneric("addStandardNames", signature="object",
                             refseq.entries, ensembl.gene.entries,
                             ensembl.prot.entries, string.entries)
     unrecognized.entries <- setdiff(x, recognized.entries)
-  
+
     list(ensemblGene=ensembl.gene.entries,
          ensemblProt=ensembl.prot.entries,
          locuslink=locuslink.entries,
@@ -75,7 +75,7 @@ setGeneric("addStandardNames", signature="object",
          string=string.entries,
          uniprotkb=uniprotkb.entries,
          unrecognized=unrecognized.entries)
-         
+
 
 } # .categorize
 #-------------------------------------------------------------------------------
@@ -83,18 +83,18 @@ setGeneric("addStandardNames", signature="object",
 {
     uniprots <- gsub(".*uniprotkb:([A-Z0-9]*).*", "\\1", entries)
     names(uniprots) <- entries
-    filter <- "uniprot_sptrembl"
-    columns = c (filter, "entrezgene", "hgnc_symbol");
-    tbl.uniprot.trembl <- getBM(filters=filter, values=uniprots,
+    biomart.filter <- "uniprotsptrembl"
+    columns = c (biomart.filter, "entrezgene", "hgnc_symbol");
+    tbl.uniprot.trembl <- getBM(filters=biomart.filter, values=uniprots,
                                 attributes=columns, mart=mart)
     colnames(tbl.uniprot.trembl) <- c("id", "geneID", "symbol")
     raw.ids <- names(uniprots)[match(tbl.uniprot.trembl$id,
                                      as.character(uniprots))]
     tbl.uniprot.trembl$raw.id <- raw.ids
-    
-    filter <- "uniprot_swissprot"
-    columns = c (filter, "entrezgene", "hgnc_symbol");
-    tbl.uniprot <- getBM(filters=filter, values=uniprots, attributes=columns,
+
+    biomart.filter <- "uniprotswissprot"
+    columns = c (biomart.filter, "entrezgene", "hgnc_symbol");
+    tbl.uniprot <- getBM(filters=biomart.filter, values=uniprots, attributes=columns,
                          mart=mart)
     colnames(tbl.uniprot) <- c("id", "geneID", "symbol")
     raw.ids <- names(uniprots)[match(tbl.uniprot$id, as.character(uniprots))]
@@ -132,13 +132,13 @@ setGeneric("addStandardNames", signature="object",
                              symbol=character(0), raw.id=character(0))
     if(length(entries) == 0)
         return(tbl.string)
-    
+
     string.ensps <- gsub(".*\\.(ENSP[0-9]*)\\|.*", "\\1", entries)
     names(string.ensps) <- entries
-    tbl.string <- getBM(filters="ensembl_peptide_id", values=string.ensps,
-                        attributes=c("ensembl_peptide_id", "entrezgene",
-                                     "hgnc_symbol"),
-                        mart=mart)
+    biomart.filter <- "ensembl_peptide_id"
+    columns = c (biomart.filter, "entrezgene", "hgnc_symbol");
+    tbl.string <- getBM(filters=biomart.filter, values=string.ensps,
+                        attributes=columns, mart=mart)
     colnames(tbl.string) <- c("id", "geneID", "symbol")
     raw.ids <- names(string.ensps)[match(tbl.string$id, as.character(string.ensps))]
     tbl.string$raw.id <- raw.ids
@@ -147,19 +147,21 @@ setGeneric("addStandardNames", signature="object",
     tbl.string
 
 } # .translate.string
-#------------------------------------------------------------------------------- 
+#-------------------------------------------------------------------------------
 .translate.ensemblGene <- function(mart, entries)
 {
     tbl.ensg <- data.frame(id=character(0), geneID=character(0),
                              symbol=character(0), raw.id=character(0))
     if(length(entries) == 0)
         return(tbl.ensg)
-    
+
     ensembl.genes <- gsub(".*ensembl:([A-Z0-9_]*).*", "\\1", entries)
     names(ensembl.genes) <- entries
-    tbl.ensg <- getBM(filters="ensembl_gene_id", values=ensembl.genes,
-                     attributes=c("ensembl_gene_id", "entrezgene", "hgnc_symbol"),
-                     mart=mart)
+    biomart.filter <- "ensembl_gene_id"
+    columns = c (biomart.filter, "entrezgene", "hgnc_symbol");
+
+    tbl.ensg <- getBM(filters=biomart.filter, values=ensembl.genes,
+                     attributes=columns, mart=mart)
     colnames(tbl.ensg) <- c("id", "geneID", "symbol")
     raw.ids  <- names(ensembl.genes)[match(tbl.ensg$id,
                                            as.character(ensembl.genes))]
@@ -182,10 +184,10 @@ setGeneric("addStandardNames", signature="object",
 
     ensembl.prots <- gsub(".*ensembl:([A-Z0-9_]*).*", "\\1", entries)
     names(ensembl.prots) <- entries
-    tbl.ensp <- getBM(filters="ensembl_peptide_id", values=ensembl.prots,
-                      attributes=c("ensembl_peptide_id", "entrezgene",
-                                   "hgnc_symbol"),
-                      mart=mart)
+    biomart.filter <- "ensembl_peptide_id"
+    columns <- c(biomart.filter,  "entrezgene", "hgnc_symbol")
+    tbl.ensp <- getBM(filters=biomart.filter, values=ensembl.prots,
+                      attributes=columns, mart=mart)
     colnames(tbl.ensp) <- c("id", "geneID", "symbol")
     raw.ids <- names(ensembl.prots)[match(tbl.ensp$id,
                                           as.character(ensembl.prots))]
@@ -209,9 +211,10 @@ setGeneric("addStandardNames", signature="object",
 
     entrezs <- gsub(".*locuslink:([A-Z0-9]*).*", "\\1", entries)
     names(entrezs) <- entries
-    tbl.entrezs <- getBM(filters="entrezgene", values=entrezs,
-                         attributes=c("entrezgene", "entrezgene", "hgnc_symbol"),
-                         mart=mart)
+    biomart.filter <- "entrezgene"
+    columns <- c(biomart.filter,  "entrezgene", "hgnc_symbol")
+    tbl.entrezs <- getBM(filters=biomart.filter, values=entrezs,
+                         attributes=columns, mart=mart)
     colnames(tbl.entrezs) <- c("id", "geneID", "symbol")
     raw.ids <- names(entrezs)[match(tbl.entrezs$id, as.character(entrezs))]
     tbl.entrezs$raw.id <- raw.ids
@@ -232,10 +235,10 @@ setGeneric("addStandardNames", signature="object",
 
     refseqs <- gsub(".*refseq:([A-Z0-9_]*).*", "\\1", entries)
     names(refseqs) <- entries
-    tbl.refseqs <- getBM(filters="refseq_peptide", values=refseqs,
-                          attributes=c("refseq_peptide", "entrezgene",
-                                       "hgnc_symbol"),
-                          mart=mart)
+    biomart.filter <- "refseq_peptide"
+    columns <- c(biomart.filter,  "entrezgene", "hgnc_symbol")
+    tbl.refseqs <- getBM(filters=biomart.filter, values=refseqs,
+                          attributes=columns, mart=mart)
     colnames(tbl.refseqs) <- c("id", "geneID", "symbol")
     raw.ids <- names(refseqs)[match(tbl.refseqs$id, as.character(refseqs))]
     tbl.refseqs$raw.id <- raw.ids
@@ -255,10 +258,10 @@ setGeneric("addStandardNames", signature="object",
 
     refseqs <- gsub(".*refseq:([A-Z0-9_]*).*", "\\1", entries)
     names(refseqs) <- entries
-    tbl.refseqs <- getBM(filters="refseq_peptide", values=refseqs,
-                          attributes=c("refseq_peptide", "entrezgene",
-                                       "hgnc_symbol"),
-                          mart=mart)
+    biomart.filter <- "refseq_peptide"
+    columns <- c(biomart.filter,  "entrezgene", "hgnc_symbol")
+    tbl.refseqs <- getBM(filters=biomart.filter, values=refseqs,
+                          attributes=columns, mart=mart)
     colnames(tbl.refseqs) <- c("id", "geneID", "symbol")
     raw.ids <- names(refseqs)[match(tbl.refseqs$id, as.character(refseqs))]
     tbl.refseqs$raw.id <- raw.ids
@@ -307,18 +310,18 @@ setMethod("addGeneInfo", signature=c(object="IDMapper"),
                                    %in% colnames(tbl))
       if(some.geneInfo.present)
          unmapped.rows <- which(tbl$A.name == "-")
-     
+
       A <- tbl$A[unmapped.rows]
       B <- tbl$B[unmapped.rows]
-      
+
       raw.ids <- unique(c(A, B))
-     
+
       tbl.xref <- .translateAll(object@mart, raw.ids)
 
          # create two named lists, for fast lookup of tbl$A and $B
       syms <- tbl.xref$symbol
       names(syms) <- tbl.xref$raw.id
-       
+
       geneIDs <- tbl.xref$geneID
       names(geneIDs) <- tbl.xref$raw.id
 
@@ -343,14 +346,14 @@ setMethod("addGeneInfo", signature=c(object="IDMapper"),
                       B.id=empty.column,
                       stringsAsFactors=FALSE)
          }# no previous geneInfo
-       
+
       tbl$A.name[unmapped.rows] <- A.name
       tbl$B.name[unmapped.rows] <- B.name
       tbl$A.id[unmapped.rows] <- A.id
       tbl$B.id[unmapped.rows] <- B.id
 
       tbl
-           
+
       }) # addGeneInfo
 #-------------------------------------------------------------------------------
 setMethod("addStandardNames", signature=c(object="IDMapper"),
@@ -365,18 +368,18 @@ setMethod("addStandardNames", signature=c(object="IDMapper"),
                                    %in% colnames(tbl))
       if(some.geneInfo.present)
          unmapped.rows <- which(tbl$A.name == "-")
-     
+
       A <- tbl$A[unmapped.rows]
       B <- tbl$B[unmapped.rows]
-      
+
       raw.ids <- unique(c(A, B))
-     
+
       tbl.xref <- .translateAll(object@mart, raw.ids)
 
          # create two named lists, for fast lookup of tbl$A and $B
       syms <- tbl.xref$symbol
       names(syms) <- tbl.xref$raw.id
-       
+
       geneIDs <- tbl.xref$geneID
       names(geneIDs) <- tbl.xref$raw.id
 
@@ -401,14 +404,14 @@ setMethod("addStandardNames", signature=c(object="IDMapper"),
                       B.id=empty.column,
                       stringsAsFactors=FALSE)
          }# no previous geneInfo
-       
+
       tbl$A.name[unmapped.rows] <- A.name
       tbl$B.name[unmapped.rows] <- B.name
       tbl$A.id[unmapped.rows] <- A.id
       tbl$B.id[unmapped.rows] <- B.id
 
       tbl
-           
+
       }) # addGeneInfo
 #-------------------------------------------------------------------------------
 

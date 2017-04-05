@@ -1,10 +1,10 @@
 Package: PSICQUIC
 Type: Package
 Title: Proteomics Standard Initiative Common QUery InterfaCe
-Version: 1.13.0
-Date: 2015-12-08
+Version: 1.13.1
+Date: 2017-04-05
 Author: Paul Shannon
-Maintainer: Paul Shannon<pshannon@fhcrc.org>
+Maintainer: Paul Shannon<pshannon@systemsbiology.org>
 Depends: R (>= 3.2.2), methods, IRanges, biomaRt, BiocGenerics, httr, plyr
 Suggests: org.Hs.eg.db
 Imports: RCurl
