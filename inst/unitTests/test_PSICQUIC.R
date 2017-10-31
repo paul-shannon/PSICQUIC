@@ -38,7 +38,7 @@ paulsTests <- function()
     test_retrieveByDetectionMethod()
     test_retrieveBySpeciesId()
     test_smallMoleculeWithoutSpeciesDesignation()
-    
+
 } # paulsTests
 #-------------------------------------------------------------------------------
 test_initialConditions <- function()
@@ -49,7 +49,7 @@ test_initialConditions <- function()
         # to accomplish that
     x <- data.frame(a=letters, b=LETTERS)
     checkTrue(all(sapply(x, is.factor)))
-    
+
 } # test_initialConditions
 #-------------------------------------------------------------------------------
 test_.loadRegistry <- function()
@@ -59,10 +59,10 @@ test_.loadRegistry <- function()
 
         # do some simple reasonableness tests
     checkEquals(colnames(tbl), c("url"))
-    checkEquals(grep("^http://", tbl$url), 1:nrow(tbl))
+    checkEquals(grep("^http", tbl$url), 1:nrow(tbl))
     checkTrue(nrow(tbl) > 1)   # ridiculously conservative number of rows
-    
-} # test_.loadRegistry 
+
+} # test_.loadRegistry
 #-------------------------------------------------------------------------------
 test_ctor <- function()
 {
@@ -70,7 +70,7 @@ test_ctor <- function()
     psicquic <- PSICQUIC(test=TRUE)
     checkTrue(is(providers(psicquic), "character"))
     checkTrue(length(providers(psicquic)) > 0)
-    
+
 } # test_ctor
 #-------------------------------------------------------------------------------
 # this utility method is the ultimate endpoint of all queries for the
@@ -94,7 +94,7 @@ test_.retrieveData <- function()
         print("expected psicquic sources not available, skipping test_.retrieveData");
         return(TRUE)
         }
-    
+
     base.url <- PSICQUIC:::providerUrl(psicquic, source)
     fixed.site.url <- sub("psicquic$", "current/search/query/", base.url)
     args <- "identifier:TP53%20AND%20species:9606"
@@ -144,24 +144,24 @@ test_rawQuery <- function()
 
        # specify a AND b.  IntAct and iRefIndex both
        # report interactions between these two
-    
+
     if("iRefIndex" %in% available.providers){
         rawArgs.1 <- "identifier:(ALK AND MAP3K3) AND species:9606"
         tbl.2 <- rawQuery(psicquic, "iRefIndex", rawArgs.1)
         checkEquals(nrow(tbl.2), 4)
-    
+
            # two references support interactions between these two at iRefIndex:
            #  15657099: 1 row
            #  14743216: 3 rows
-    
+
         rawArgs <- sprintf("%s AND pubid:(15657099 OR 14743216)", rawArgs.1)
         tbl.3 <- rawQuery(psicquic, "iRefIndex", rawArgs)
         checkEquals(nrow(tbl.3), 4)
-    
+
         rawArgs <- sprintf("%s AND pubid:15657099", rawArgs.1)
         tbl.4 <- rawQuery(psicquic, "iRefIndex", rawArgs)
         checkEquals(nrow(tbl.4), 1)
-    
+
         rawArgs <- sprintf("%s AND pubid:14743216", rawArgs.1)
         tbl.5 <- rawQuery(psicquic, "iRefIndex", rawArgs)
         checkEquals(nrow(tbl.5), 3)
@@ -176,12 +176,12 @@ test_rawQuery <- function()
         tbl.6 <- rawQuery(psicquic, "BioGrid", rawArgs)
         checkTrue(nrow(tbl.6) > 50)  # 1331 (aug 2014)  but just 55 (dec 2013)
         checkEquals(ncol(tbl.6), 15)
-        
+
         rawArgs <- sprintf("%s AND type:direct interaction", rawArgs.0)
         tbl.7 <- rawQuery(psicquic, "BioGrid", rawArgs)
         checkTrue(nrow(tbl.7) >= 15) # 15 (dec 2013) 801 (aug 2014)
         checkEquals(ncol(tbl.7), 15)
-    
+
         rawArgs <- sprintf("%s AND type:(direct interaction OR physical association)",
                            rawArgs.0)
         tbl.8 <- rawQuery(psicquic, "BioGrid", rawArgs)
@@ -223,29 +223,29 @@ test_interactions <- function()
                               species=stickleback)
 
     checkEquals(dim(tbl.empty), c(0,16))
-                
+
        # ALK: anaplastic lymphoma kinase, entrez geneID 238
-    
+
     tbl <- interactions(psicquic, id="ALK",
                         species="9606", speciesExclusive=TRUE,
                         provider=providers, quiet=TRUE)
 
        # no factors.  confidence scores are (as of oct 2013) unparsed strings
     checkTrue(all(sapply(tbl, is.character)))
-    
+
     #browser()
     checkTrue(nrow(tbl) > 1)    # 411 on (10 sep 2013), 165 on (6 jan 2015)
 
        # except for "confidenceScore", which is numeric,
        # all columns are character
-  
-              
+
+
        # cross-tabulation gives a useful summary of the
        # interactions: how determined, of what nature:
-    
+
     xtab <- as.data.frame(with(tbl, table(detectionMethod,type)),
                           stringsAsFactors=FALSE)
-    
+
 
     xtab <- xtab[xtab$Freq > 0,]
     xtab <- xtab[order(xtab$Freq, decreasing=TRUE),]
@@ -253,11 +253,11 @@ test_interactions <- function()
        # do a very simple single test:
        # "physical association" is a common interaction type
    checkTrue(length(grep("physical association", xtab$type)) >= 1)
-    
+
        # test now for a nonsensical call
    checkException(interactions(psicquic, provider="bogus provider"),
                    silent=TRUE)
-   
+
 } # test_interactions
 #-------------------------------------------------------------------------------
 test_interactionsTwoGenes <- function()
@@ -279,14 +279,14 @@ test_interactionsTwoGenes <- function()
                         provider=providers, quiet=TRUE)
 
     checkTrue(nrow(tbl) > 1)  # (found nrow=5 on 6 jan 2015)
-     
+
 } # test_interactionsTwoGenes
 #-------------------------------------------------------------------------------
 test_interactionsFourGenes <- function()
 {
     print("--- test_interactionsFourGenes")
-    psicquic <- PSICQUIC(test=FALSE) 
-    
+    psicquic <- PSICQUIC(test=FALSE)
+
     providers <- c("mentha", "BioGrid", "BIND")
     if(!all(providers %in% providers(psicquic))){
        print("expected psicquic sources not available, test_interactionFourGenes");
@@ -306,7 +306,7 @@ test_interactionsFourGenes <- function()
     tbl.2 <- addGeneInfo(mapper, tbl)
     checkEquals(sort(unique(c(tbl.2$A.name, tbl.2$B.name))),
                 c("ALK", "HSPD1", "JAK3", "SHC3"))
-     
+
 } # test_interactionsFourGenes
 #-------------------------------------------------------------------------------
 test_retrieveByPubmedID <- function()
@@ -315,31 +315,31 @@ test_retrieveByPubmedID <- function()
     psicquic <- PSICQUIC(test=TRUE)
 
     provider <- "iRefIndex"
-    
+
     if(provider %in% providers(psicquic)){
        genes <- c("ALK", "MAP3K3")
        tbl <- interactions(psicquic,
                            id=genes,
                            species="9606",
                            provider=provider, quiet=TRUE)
-      
+
        checkEquals(dim(tbl), c(4, 16))
-   
+
        tbl.2 <-interactions(psicquic, species="9606",
                             id=genes,
                             provider=provider, publicationID="15657099",
                             quiet=TRUE)
        checkEquals(dim(tbl.2), c(1, 16))
-   
+
        tbl.3 <-interactions(psicquic, id=genes, species="9606",
                             provider=provider, publicationID="14743216",
                             quiet=TRUE)
        checkEquals(dim(tbl.3), c(3, 16))
-       
+
        tbl.4 <-interactions(psicquic, id=genes, species="9606",
                             provider=provider,
                             publicationID=c("14743216", "15657099"))
-   
+
        checkEquals(dim(tbl.4), c(4, 16))
        } # if provider
 
@@ -356,7 +356,7 @@ test_retrieveByPubmedIdOnly <- function()
        printf("%s not available, skipping test_retrieveByPubmedIdOnly", provider);
        return(TRUE)
        }
-      
+
        # pmid: 20936779
        # Nature Methods, 2010
        # A human MAP kinase interactome, Sourav Bandyopadhyay et al
@@ -381,7 +381,7 @@ test_retrieveByOmimId <- function()
 
     omim.1 <- "00109135"
     omim.2 <- "00137800"
-    
+
        # http://www.ncbi.nlm.nih.gov/omim/?term=00109135
        # describes the AXL receptor tryosine kinase, geneID 558,
        # oddly, this gene appears in only 7/184 of the interactions
@@ -415,7 +415,7 @@ test_retrieveByInteractionType <- function()
     provider <- "BioGrid"
     if(!provider %in% providers(psicquic))
         return(sprintf("%s not available", provider))
-    
+
     tbl <- interactions(psicquic, id="ALK", species="9606", provider="BioGrid")
     checkTrue(nrow(tbl) > 50)
     checkEquals(ncol(tbl), 16)
@@ -458,7 +458,7 @@ test_retrieveByInteractionType <- function()
 
 test_retrieveByDetectionMethod <- function()
 {
-    
+
     psicquic <- PSICQUIC(test=FALSE)
     providers <- c("BioGrid","InnateDB","IntAct","MINT","Reactome-FIs","STRING",
                    "UniProt","iRefIndex")
@@ -476,7 +476,7 @@ test_retrieveByDetectionMethod <- function()
                           detectionMethod="anti bait coip")
         # some surprising results here: both "anti bait coip" and
         # "anti tag coip are returned
-    
+
     antiBaitCoip.count <- nrow(tbl.1)
     methods <- sort(unique(tbl.1$detectionMethod))
 
@@ -488,7 +488,7 @@ test_retrieveByDetectionMethod <- function()
 
     bothMethods.count <- nrow (tbl.2)
     checkTrue(bothMethods.count >= (pullDown.count + antiBaitCoip.count))
-              
+
 } # test_retrieveByDetectionMethod
 #-------------------------------------------------------------------------------
 # most interactions are for human, mouse, yeast
@@ -506,7 +506,7 @@ test_retrieveBySpeciesId <- function()
     provider <- "BioGrid"
     if(!provider %in% providers(psicquic))
         return(sprintf("%s not available", provider))
-    
+
     tbl <- interactions(psicquic,
                         species=hepC, speciesExclusive=FALSE,
                         provider="BioGrid", quiet=TRUE)
@@ -529,7 +529,7 @@ test_retrieveBySpeciesId <- function()
       # to hepC, will at present return an empty data.frame
       # but in time this may change, and a non-empty data.frame
       # will be returned, but with only hepC proteins mentioned.
-    
+
     tbl.1 <- interactions(psicquic,
                           species=hepC, speciesExclusive=TRUE,
                           provider="BioGrid", quiet=TRUE)
@@ -543,12 +543,12 @@ test_retrieveBySpeciesId <- function()
     tbl.2 <- interactions(psicquic, species=c(hepC, human), provider="BioGrid",
                           quiet=TRUE, speciesExclusive=TRUE)
     checkEquals(nrow(tbl.2), counts$`taxid:9606`)
-    
+
 
     tbl.3 <- interactions(psicquic, species=c(stickleback, human), provider="BioGrid",
                           quiet=TRUE, speciesExclusive=TRUE)
 
-   
+
 } # test_retrieveBySpeciesId
 #-------------------------------------------------------------------------------
 test_.restrictBySpecies <- function()
@@ -566,7 +566,7 @@ test_.restrictBySpecies <- function()
        printf("did not receive any results from provider '%s',  skipping test_.restrictBySpecies", provider)
        return(TRUE)
        }
-    
+
     if(length(unique(c(tbl$taxonA, tbl$taxonB))) <= 1){
         print("did not find multiple species in available providers, skipping test_.restrictBySpecies")
         return(TRUE)
@@ -576,16 +576,16 @@ test_.restrictBySpecies <- function()
 
        # ensure that there are some non-9606 taxa reported
        # in this result.  for a detailed look:
-    
+
     xtab.taxa <- as.data.frame(table(c(tbl$taxonA, tbl$taxonB)))
     taxa.variants <- xtab.taxa$Var1
-    checkTrue(length(grep("9606", taxa.variants)) < length(taxa.variants)) 
-       
+    checkTrue(length(grep("9606", taxa.variants)) < length(taxa.variants))
+
     tbl.2 <- PSICQUIC:::.restrictBySpecies(tbl, "9606")
 
         # ensure that every surving row has a the "9606" string
         # in both taxon entries
-    
+
     all.taxa.restricted <- unique(c(tbl.2$taxonA, tbl.2$taxonB))
     checkEquals(length(all.taxa.restricted), 1)
 
@@ -604,7 +604,7 @@ test_handleEmbeddedSingleQuotes <- function()
     if(!provider %in% providers(psicquic))
        return(sprintf("%s not available", provider))
 
-        
+
     mint.tp53.url <-  paste("http://www.ebi.ac.uk/Tools/webservices/psicquic/mint",
                             "/webservices/current/search/query",
                             "/identifier:TP53%20AND%20species:9606",
@@ -615,11 +615,11 @@ test_handleEmbeddedSingleQuotes <- function()
       # single quotes are not disabled as quoting characters
       # make sure that this query is still a good one.
     checkEquals(grep("'", raw.text), 1)
- 
+
     raw.row.count <- length(strsplit(raw.text, "\n")[[1]])  # 445 on (10 oct 2013)
- 
+
       # make sure we get the same number of rows
-    
+
     tbl <- interactions(psicquic, species="9606", provider=provider, id="TP53",
                         quiet=TRUE, speciesExclusive=FALSE)
 
@@ -631,7 +631,7 @@ test_handleEmbeddedSingleQuotes <- function()
 # we want to make sure that we accept the accompanying interaction
 # one case where this occurs:  ChEMBL, where a drug belongs to
 # to no species.  the current solution is to issue the query without
-# species restriction.  
+# species restriction.
 
 test_smallMoleculeWithoutSpeciesDesignation <- function()
 {
@@ -641,7 +641,7 @@ test_smallMoleculeWithoutSpeciesDesignation <- function()
 
     if(!provider %in% providers(psicquic))
        return(sprintf("%s not available", provider))
-    
+
     tbl.chembl <- interactions(psicquic, id="imatinib",
                                provider=provider,
                                speciesExclusive=FALSE,
@@ -657,15 +657,15 @@ test_smallMoleculeWithoutSpeciesDesignation <- function()
        # will include it, and thus the "unassigned" species token should
        # be found once in every row -- though perhaps sometimes in
        # taxonA and sometimes in taxonB
-    
+
     checkEquals(hit.count, freq[["-"]])
-    
-    
+
+
 } # test_smallMoleculeWithoutSpeciesDesignation
 #-------------------------------------------------------------------------------
 # multi-species queries are, in general, less interesting than single-species
 # queries, with two important exceptions:
-# 
+#
 #   1) infection
 #   2) small-molecule protein interactions
 #
@@ -682,13 +682,13 @@ explore_multiSpeciesQuery <- function()
 
     provider <- "ChEMBL"
     psicquic <- PSICQUIC(test=TRUE)
-    
+
     if(!provider %in% providers(psicquic))
        return(sprintf("%s not available", provider))
 
     base.url <- PSICQUIC:::providerUrl(psicquic, provider)
     fixed.site.url <- sub("psicquic$", "current/search/query/", base.url)
-    #args <- "identifier:imatinib"   
+    #args <- "identifier:imatinib"
     args <- sprintf("identifier:(%s AND %s)", "imatinib", "ABL1")
     full.url <- sprintf("%s%s", fixed.site.url, args)
     tbl <- PSICQUIC:::.retrieveData(full.url)
@@ -712,18 +712,18 @@ explore_multiSpeciesQuery <- function()
        # a meaninful test.  the species-neutral query produces
        # at least one human, one mouse, and many "-" (unspecified)
        # for imatinib
-    
+
     checkTrue(length(grep("mouse", names(freq))) > 0)   # just 1
     checkTrue(length(grep("human", names(freq))) > 0)   # 35
     checkTrue(freq[["-"]] > 30)  # (36 23 dec 2013)
 
        # should get 35 interactions, with the one mouse interaction
        # left out.   currently returns zero...
-    
+
     tbl.human <- interactions(psicquic, id=c("imatinib","ABL1"),
                               species=c("9606", "-"),
                               provider=provider)
-    
+
 
 } # explore_multiSpeciesQuery
 #-------------------------------------------------------------------------------
@@ -734,8 +734,8 @@ doNot_test_GeneMANIA <- function()
    tbl <- interactions(psicquic, species="9606", id="TP53", provider="GeneMANIA")
 
    # this test fails now (30 oct 2014) due to GeneMANIA problems
-   # checkTrue(nrow(tbl) > 0)  
+   # checkTrue(nrow(tbl) > 0)
 
-    
+
 } # doNot_test_genemania
 #-------------------------------------------------------------------------------
