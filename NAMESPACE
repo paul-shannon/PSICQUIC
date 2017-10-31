@@ -22,4 +22,5 @@ import(RCurl)
 import(biomaRt)
 import(IRanges)
 import(methods)
-
+import(plyr)
+import(httr)
