@@ -18,9 +18,11 @@ export(
   )
 
 import(BiocGenerics)
-import(RCurl)
 import(biomaRt)
 import(IRanges)
 import(methods)
 import(plyr)
 import(httr)
+
+importFrom("RCurl", "url.exists", "getURL")
+importFrom("utils", "browseURL", "read.table", "str")
