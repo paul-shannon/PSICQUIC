@@ -14,16 +14,18 @@ IDMapper <- function(species)
         }
 
      # check (separately) 3 steps which must be working to create an IDMapper
-   message("checking for biomart access...")
-   host="www.ensembl.org"
-   url <- paste0("http://", host)
-   message(sprintf("   does '%s' respond?", url))
-   stopifnot(url.exists(url))
-   message("   creating ensembl mart");
-   mart <- useMart(biomart = "ensembl", host=host)
-   dataset <- "hsapiens_gene_ensembl"
-   message(sprintf("   %s dataset provided?", dataset))
-   stopifnot(dataset %in% listDatasets(mart)[,1])
+    message("checking for biomart access...")
+    host="www.ensembl.org"
+    url <- paste0("http://", host)
+    message(sprintf("   does '%s' respond?", url))
+    stopifnot(url.exists(url))
+    message("   creating ensembl mart");
+    mart <- useMart(biomart = "ensembl", host=host)
+    dataset <- "hsapiens_gene_ensembl"
+    message(sprintf("   %s dataset provided?", dataset))
+    available.datasets <- listDatasets(mart)$dataset
+
+    stopifnot(dataset %in% listDatasets(mart)[,1])
 
     self <- new("IDMapper")
     if(species == "9606"){
